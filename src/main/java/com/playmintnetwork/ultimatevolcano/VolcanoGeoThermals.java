@@ -127,6 +127,9 @@ public class VolcanoGeoThermals implements Listener {
                 case CHICKEN:
                     e.getItemDrop().getItemStack().setType(Material.COOKED_CHICKEN);
                     break;
+                case SALMON:
+                    e.getItemDrop().getItemStack().setType(Material.COOKED_SALMON);
+                    break;
                 case LEGACY_RAW_FISH:
                     e.getItemDrop().getItemStack().setType(Material.LEGACY_COOKED_FISH);
                     break;
