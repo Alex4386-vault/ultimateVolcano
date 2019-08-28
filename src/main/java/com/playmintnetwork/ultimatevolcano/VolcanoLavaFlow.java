@@ -33,11 +33,13 @@ public class VolcanoLavaFlow implements Listener {
             Material.JUNGLE_SAPLING, Material.OAK_SAPLING, Material.POTTED_ACACIA_SAPLING, Material.POTTED_BIRCH_SAPLING, Material.POTTED_DARK_OAK_SAPLING,
             Material.POTTED_JUNGLE_SAPLING, Material.POTTED_OAK_SAPLING, Material.POTTED_SPRUCE_SAPLING, Material.POTTED_BLUE_ORCHID, Material.BLUE_ORCHID,
             Material.POTTED_BROWN_MUSHROOM, Material.BROWN_MUSHROOM, Material.BROWN_MUSHROOM_BLOCK, Material.POTTED_CACTUS, Material.CACTUS,
-            Material.CACTUS_GREEN, Material.POTTED_DANDELION, Material.DANDELION, Material.DANDELION_YELLOW, Material.POTTED_DEAD_BUSH, Material.DEAD_BUSH,
+            Material.POTTED_DANDELION, Material.DANDELION, Material.POTTED_DEAD_BUSH, Material.DEAD_BUSH,
             Material.POTTED_FERN, Material.FERN, Material.LARGE_FERN, Material.POTTED_ORANGE_TULIP, Material.ORANGE_TULIP, Material.POTTED_OXEYE_DAISY,
             Material.OXEYE_DAISY, Material.POTTED_PINK_TULIP, Material.PINK_TULIP, Material.POTTED_POPPY, Material.POPPY, Material.POTTED_RED_MUSHROOM,
             Material.RED_MUSHROOM, Material.RED_MUSHROOM_BLOCK, Material.POTTED_RED_TULIP, Material.RED_TULIP, Material.POTTED_WHITE_TULIP,
-            Material.WHITE_TULIP, Material.SIGN, Material.ACACIA_WOOD, Material.BIRCH_WOOD, Material.DARK_OAK_WOOD, Material.JUNGLE_WOOD, Material.OAK_WOOD,
+            Material.WHITE_TULIP, Material.SPRUCE_SIGN, Material.ACACIA_SIGN, Material.SPRUCE_WALL_SIGN, Material.BIRCH_SIGN, Material.BIRCH_WALL_SIGN,
+            Material.ACACIA_WALL_SIGN, Material.DARK_OAK_SIGN, Material.DARK_OAK_WALL_SIGN, Material.JUNGLE_SIGN, Material.JUNGLE_WALL_SIGN, Material.OAK_SIGN,
+            Material.OAK_WALL_SIGN, Material.ACACIA_WOOD, Material.BIRCH_WOOD, Material.DARK_OAK_WOOD, Material.JUNGLE_WOOD, Material.OAK_WOOD,
             Material.SPRUCE_WOOD, Material.STRIPPED_ACACIA_WOOD, Material.STRIPPED_BIRCH_WOOD, Material.STRIPPED_DARK_OAK_WOOD, Material.STRIPPED_JUNGLE_WOOD,
             Material.STRIPPED_OAK_WOOD, Material.STRIPPED_SPRUCE_WOOD, Material.DARK_OAK_DOOR, Material.ACACIA_DOOR, Material.BIRCH_DOOR, Material.JUNGLE_DOOR,
             Material.OAK_DOOR, Material.ACACIA_STAIRS, Material.SPRUCE_STAIRS, Material.BIRCH_STAIRS, Material.DARK_OAK_STAIRS, Material.JUNGLE_STAIRS,
@@ -276,15 +278,21 @@ public class VolcanoLavaFlow implements Listener {
         }
     }
 
+    /*
+       Cancelling ChunkUnloadEvent is
+       DEPRECATED
+
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
         if (volcano.affected(event.getChunk().getBlock(0, volcano.location.getBlockY(),0).getLocation())
             || volcano.affected(event.getChunk().getBlock(15, volcano.location.getBlockY(),0).getLocation())
             || volcano.affected(event.getChunk().getBlock(0, volcano.location.getBlockY(),15).getLocation())
             || volcano.affected(event.getChunk().getBlock(15, volcano.location.getBlockY(),15).getLocation())) {
-            event.setCancelled(true);
+            //event.setCancelled(true);
         }
     }
+
+     */
 
 
     /*

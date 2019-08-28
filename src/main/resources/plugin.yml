@@ -5,7 +5,6 @@ prefix: Volcano
 authors: [Alex4386]
 description: Minecraft world is SO BORING, Bring the earth's power into minecraft world!
 website: https://gitlab.playmintnetwork.com/Mint_Mentol/ultimateVolcano
-api-version: 1.13
 commands:
   ultimatevolcano:
     aliases:
