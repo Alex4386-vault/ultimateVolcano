@@ -1,0 +1,36 @@
+# Ultimate Volcano Global Setups
+autoStart:
+  statusCheckInterval: 144000
+  probability:
+    dormant:
+      increase: 0.05
+      decrease: 0.005
+    minor_activity:
+      increase: 0.1
+      decrease: 0.05
+    major_activity:
+      increase: 0.2
+      decrease: 0.1
+  disallowLavaPourNonCrater: true
+
+defaultvolcano:
+
+  lavaFlow:
+    delayFlowed: 3
+    flowed: 6
+
+  autoStart:
+    eruptionTimer: 6000
+    pourLavaStart: true
+
+  generator:
+    layer: "STONE,100"
+
+  erupt:
+    isExplosive: true
+    delayExplo: 30
+    damageExplo: 20
+    realDamageExplo: 2
+    timerExplo: 4
+
+

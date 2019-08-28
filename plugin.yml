@@ -1,0 +1,17 @@
+name: ultimateVolcano
+version: ${project.version}
+main: com.playmintnetwork.ultimatevolcano.MainPlugin
+prefix: Volcano
+authors: [Alex4386]
+description: Minecraft world is SO BORING, Bring the earth's power into minecraft world!
+website: https://gitlab.playmintnetwork.com/Mint_Mentol/ultimateVolcano
+commands:
+  ultimatevolcano:
+    aliases:
+      - vol
+      - volcano
+    description: Ultimate VOLCANO!
+    usage: /<command> help
+permissions:
+  ultimatevolcano.*:
+    description: Allow using ultimatevolcano plugin commands
