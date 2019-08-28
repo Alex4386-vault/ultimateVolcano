@@ -4,4 +4,4 @@ Since this is considered as a Fork, This Plugin is distributed under GPLv3, Same
   
 Natural Disaster plugin for Minecraft Spigot Servers developed for MintNetwork Season 3::The Endless Survival.  
   
-Since I am no longer part of MintNetwork, This is removed from MintNetwork group repository to this repository.
+Since I am no longer part of MintNetwork, This is moved from MintNetwork group repository to this repository.
