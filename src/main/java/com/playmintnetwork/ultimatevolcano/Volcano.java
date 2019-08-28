@@ -185,6 +185,12 @@ public class Volcano {
         erupt.unregisterTask();
         geoThermals.unregisterTask();
 
+        Bukkit.getLogger().log(Level.INFO, "disabling Volcano "+name+" 's Force Loaded Chunks");
+        for (int i = 0; i < lavaFlow.lavaFlowChunks.size(); i++) {
+            lavaFlow.lavaFlowChunks.get(i).setForceLoaded(false);
+        }
+        lavaFlow.lavaFlowChunks.clear();
+
         Bukkit.getLogger().log(Level.INFO, "Setting Volcano "+name+" status to MAJOR_ACTIVITY");
         autoStart.status = VolcanoCurrentStatus.MAJOR_ACTIVITY;
 
@@ -403,7 +409,7 @@ class VolcanoCrater {
         int y = (location.getBlockY() < 63
                 &&
                 (location.getWorld().getBlockAt(location).getType().equals(Material.WATER)
-                    || location.getWorld().getBlockAt(location).getType().equals(Material.STATIONARY_WATER)))
+                    || location.getWorld().getBlockAt(location).getType().equals(Material.LEGACY_STATIONARY_WATER)))
                 ? location.getWorld().getHighestBlockYAt(location.getBlockX(), location.getBlockZ()) :
                 location.getBlockY();
         int z = location.getBlockZ();

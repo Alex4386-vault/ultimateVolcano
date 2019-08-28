@@ -23,10 +23,28 @@ public class VolcanoLavaFlow implements Listener {
     private Random rand = new Random();
     public Volcano volcano;
     public List<FallingBlock> currentFB = new ArrayList<FallingBlock>();
+    public List<Chunk> lavaFlowChunks = new ArrayList<>();
     public List<Chunk> loadChunkList = new ArrayList<>();
-    private Material[] explode = { Material.LOG, Material.LOG_2, Material.LEAVES, Material.LEAVES_2, Material.LONG_GRASS, Material.YELLOW_FLOWER, Material.SIGN, Material.WOOD, Material.WOOD_DOOR, Material.WOOD_STAIRS, Material.WOOD_PLATE};
-    private Material[] explodeAndRemove = { Material.WATER, Material.STATIONARY_WATER, Material.SNOW, Material.SNOW_BLOCK };
-    private Material[] toMagmaBlock = { Material.STONE, Material.GRAVEL, Material.COBBLESTONE, Material.GRASS, Material.DIRT, Material.CLAY, Material.CONCRETE, Material.SAND };
+    private Material[] explode = { Material.BIRCH_LOG, Material.ACACIA_LOG, Material.DARK_OAK_LOG, Material.JUNGLE_LOG, Material.OAK_LOG, Material.SPRUCE_LOG,
+            Material.STRIPPED_ACACIA_LOG, Material.STRIPPED_BIRCH_LOG, Material.STRIPPED_DARK_OAK_LOG, Material.STRIPPED_JUNGLE_LOG, Material.STRIPPED_OAK_LOG,
+            Material.STRIPPED_SPRUCE_LOG, Material.ACACIA_LEAVES, Material.BIRCH_LEAVES, Material.DARK_OAK_LEAVES, Material.JUNGLE_LEAVES, Material.OAK_LEAVES,
+            Material.SPRUCE_LEAVES, Material.GRASS, Material.TALL_GRASS, Material.SUNFLOWER, Material.ALLIUM, Material.POTTED_ALLIUM, Material.AZURE_BLUET,
+            Material.POTTED_AZURE_BLUET, Material.SPRUCE_SAPLING, Material.ACACIA_SAPLING, Material.BIRCH_SAPLING, Material.DARK_OAK_SAPLING,
+            Material.JUNGLE_SAPLING, Material.OAK_SAPLING, Material.POTTED_ACACIA_SAPLING, Material.POTTED_BIRCH_SAPLING, Material.POTTED_DARK_OAK_SAPLING,
+            Material.POTTED_JUNGLE_SAPLING, Material.POTTED_OAK_SAPLING, Material.POTTED_SPRUCE_SAPLING, Material.POTTED_BLUE_ORCHID, Material.BLUE_ORCHID,
+            Material.POTTED_BROWN_MUSHROOM, Material.BROWN_MUSHROOM, Material.BROWN_MUSHROOM_BLOCK, Material.POTTED_CACTUS, Material.CACTUS,
+            Material.CACTUS_GREEN, Material.POTTED_DANDELION, Material.DANDELION, Material.DANDELION_YELLOW, Material.POTTED_DEAD_BUSH, Material.DEAD_BUSH,
+            Material.POTTED_FERN, Material.FERN, Material.LARGE_FERN, Material.POTTED_ORANGE_TULIP, Material.ORANGE_TULIP, Material.POTTED_OXEYE_DAISY,
+            Material.OXEYE_DAISY, Material.POTTED_PINK_TULIP, Material.PINK_TULIP, Material.POTTED_POPPY, Material.POPPY, Material.POTTED_RED_MUSHROOM,
+            Material.RED_MUSHROOM, Material.RED_MUSHROOM_BLOCK, Material.POTTED_RED_TULIP, Material.RED_TULIP, Material.POTTED_WHITE_TULIP,
+            Material.WHITE_TULIP, Material.SIGN, Material.ACACIA_WOOD, Material.BIRCH_WOOD, Material.DARK_OAK_WOOD, Material.JUNGLE_WOOD, Material.OAK_WOOD,
+            Material.SPRUCE_WOOD, Material.STRIPPED_ACACIA_WOOD, Material.STRIPPED_BIRCH_WOOD, Material.STRIPPED_DARK_OAK_WOOD, Material.STRIPPED_JUNGLE_WOOD,
+            Material.STRIPPED_OAK_WOOD, Material.STRIPPED_SPRUCE_WOOD, Material.DARK_OAK_DOOR, Material.ACACIA_DOOR, Material.BIRCH_DOOR, Material.JUNGLE_DOOR,
+            Material.OAK_DOOR, Material.ACACIA_STAIRS, Material.SPRUCE_STAIRS, Material.BIRCH_STAIRS, Material.DARK_OAK_STAIRS, Material.JUNGLE_STAIRS,
+            Material.OAK_STAIRS, Material.ACACIA_PRESSURE_PLATE, Material.BIRCH_PRESSURE_PLATE, Material.DARK_OAK_PRESSURE_PLATE, Material.JUNGLE_PRESSURE_PLATE,
+            Material.OAK_PRESSURE_PLATE, Material.SPRUCE_PRESSURE_PLATE };
+    private Material[] explodeAndRemove = { Material.WATER, Material.LEGACY_STATIONARY_WATER, Material.SNOW, Material.SNOW_BLOCK };
+    private Material[] toMagmaBlock = { Material.STONE, Material.GRAVEL, Material.COBBLESTONE, Material.GRASS, Material.DIRT, Material.CLAY, Material.LEGACY_CONCRETE, Material.SAND };
     private int scheduleID = -1;
     public VolcanoLavaFlowSettings settings = new VolcanoLavaFlowSettings();
 
@@ -232,10 +250,15 @@ public class VolcanoLavaFlow implements Listener {
     public void onBlockFromTo(BlockFromToEvent event){
         Block block = event.getBlock();
         Block toBlock = event.getToBlock();
-        if((toBlock.getType() == Material.AIR || toBlock.getType() == Material.STATIONARY_LAVA || toBlock.getType() == Material.LAVA) && (block.getType() == Material.STATIONARY_LAVA || block.getType() == Material.LAVA)){
+        if((toBlock.getType() == Material.AIR || toBlock.getType() == Material.LEGACY_STATIONARY_LAVA || toBlock.getType() == Material.LAVA) && (block.getType() == Material.LEGACY_STATIONARY_LAVA || block.getType() == Material.LAVA)){
             for (Volcano volcano : MainPlugin.listVolcanoes) {
 
                 if (!volcano.isChunkLoaded()) volcano.location.getChunk().load();
+
+                if (!lavaFlowChunks.contains(toBlock.getChunk())) {
+                    lavaFlowChunks.add(toBlock.getLocation().getChunk());
+                    toBlock.getLocation().getChunk().setForceLoaded(true);
+                }
 
                 if (volcano.location.getWorld() != null && volcano.location.getWorld().getUID() == block.getWorld().getUID()) {
                     if (volcano.lavaFlowAffected(block.getLocation()) && !(volcano.generator.throat && volcano.inCrater(block.getLocation()))) {

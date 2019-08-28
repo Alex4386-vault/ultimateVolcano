@@ -115,20 +115,20 @@ public class VolcanoGeoThermals implements Listener {
     public void onPlayerDropItem(PlayerDropItemEvent e) {
         if (volcano.geoThermals.enable && volcano.affected(e.getItemDrop().getLocation()) && shouldIDoIt()) {
             switch (e.getItemDrop().getItemStack().getType()) {
-                case PORK:
-                    e.getItemDrop().getItemStack().setType(Material.GRILLED_PORK);
+                case PORKCHOP:
+                    e.getItemDrop().getItemStack().setType(Material.COOKED_PORKCHOP);
                     break;
-                case RAW_BEEF:
+                case BEEF:
                     e.getItemDrop().getItemStack().setType(Material.COOKED_BEEF);
                     break;
                 case RABBIT:
                     e.getItemDrop().getItemStack().setType(Material.COOKED_RABBIT);
                     break;
-                case RAW_CHICKEN:
+                case CHICKEN:
                     e.getItemDrop().getItemStack().setType(Material.COOKED_CHICKEN);
                     break;
-                case RAW_FISH:
-                    e.getItemDrop().getItemStack().setType(Material.COOKED_FISH);
+                case LEGACY_RAW_FISH:
+                    e.getItemDrop().getItemStack().setType(Material.LEGACY_COOKED_FISH);
                     break;
                 case MUTTON:
                     e.getItemDrop().getItemStack().setType(Material.COOKED_MUTTON);
