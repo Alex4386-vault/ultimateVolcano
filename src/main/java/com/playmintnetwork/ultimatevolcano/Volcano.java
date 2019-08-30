@@ -172,6 +172,7 @@ public class Volcano {
         enabled = true;
         autoStart.status = VolcanoCurrentStatus.ERUPTING;
 
+        Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" Composition Info: "+generator.exportCompositions());
         saveToFile();
     }
 
@@ -471,5 +472,16 @@ class VolcanoGenerator {
             return false;
         }
         return true;
+    }
+
+    public String exportCompositions() {
+        String layerData = "";
+        for (int i = 0; i < composition.size(); i++) {
+            layerData += composition.get(i).material+","+composition.get(i).percentage;
+            if ((i + 1) != composition.size()) {
+                layerData += "/";
+            }
+        }
+        return layerData;
     }
 }
