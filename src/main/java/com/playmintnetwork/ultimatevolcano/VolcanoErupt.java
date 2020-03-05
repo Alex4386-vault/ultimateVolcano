@@ -19,54 +19,14 @@ public class VolcanoErupt {
     public int scheduleID = -1;
 
     public void registerTask() {
-        if (scheduleID >= 0) { return; }
-        scheduleID = Bukkit.getScheduler().scheduleSyncRepeatingTask(MainPlugin.plugin, (Runnable) () -> {
-            if (enabled && settings.isExplosive && !erupting && volcano.enabled) {
-                erupting = true;
+        if (scheduleID < 0) {
+            scheduleID = Bukkit.getScheduler().scheduleSyncRepeatingTask(MainPlugin.plugin, (Runnable) () -> {
+                if (enabled && settings.isExplosive && !erupting && volcano.enabled) {
+                    eruptNowRandom();
+                }
+            }, volcano.erupt.settings.timerExplo*20L, volcano.erupt.settings.delayExplo*20L);
+        }
 
-                //Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, () -> {
-                    int y = volcano.generator.throat ? volcano.currentHeight-2 : volcano.location.getWorld().getHighestBlockYAt(volcano.location.getBlockX(), volcano.location.getBlockZ());
-                    volcano.location.getWorld().createExplosion(
-                            volcano.location.getX(),
-                            y,
-                            volcano.location.getZ(),
-                            1F * settings.damageExplo * ((volcano.currentHeight - volcano.location.getBlockY()) / volcano.generator.heightLimit),
-                            volcano.generator.throat,
-                            false
-                    );
-                    volcano.location.getWorld().createExplosion(
-                            volcano.location.getX(),
-                            y,
-                            volcano.location.getZ(),
-                            1F * settings.realDamageExplo * ((volcano.currentHeight - volcano.location.getBlockY()) / volcano.generator.heightLimit),
-                            volcano.generator.throat,
-                            true
-                    );
-                    
-                    Location loc = new Location(volcano.location.getWorld(), volcano.location.getBlockX(), y, volcano.location.getBlockZ());
-                    //volcano.location.getWorld().playEffect(loc, Effect.SMOKE, new Random().nextInt(9), (settings.damageExplo > 40) ? 40 : settings.damageExplo);
-
-                    for (int i = 0; i < new Random().nextInt(4); i++) {
-                        FallingBlock launchBlock = volcano.location.getWorld().spawnFallingBlock(loc, new MaterialData(Material.LAVA, (byte)0));
-
-                        float lbx =  (settings.damageExplo / 4) * ((volcano.currentHeight - volcano.location.getBlockY()) / volcano.generator.heightLimit) * (new Random().nextInt(2) - 1);
-                        float lby = 3;
-                        float lbz =  (settings.damageExplo / 4) * ((volcano.currentHeight - volcano.location.getBlockY()) / volcano.generator.heightLimit) * (new Random().nextInt(2) - 1);
-
-                        launchBlock.setVelocity(new Vector(lbx, lby, lbz));
-                    }
-
-
-                    Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+" is erupting now. @ "
-                    +volcano.location.getBlockX()+","+y+","+volcano.location.getBlockZ());
-                    VolcanoEarthQuakes.triggerEarthQuakeForVolcano(volcano, settings.damageExplo);
-
-                    volcano.updateData();
-                //}, rand.nextInt(settings.timerExplo + settings.delayExplo));
-
-                erupting = false;
-            }
-        },settings.timerExplo*20, settings.delayExplo*20);
     }
 
     public void unregisterTask() {
@@ -74,13 +34,71 @@ public class VolcanoErupt {
             Bukkit.getScheduler().cancelTask(scheduleID);
             scheduleID = -1;
         }
+
+    }
+
+    public void eruptNowRandom() {
+        eruptNow(new Random().nextInt(settings.maxBombCount - settings.minBombCount + 1)+ settings.minBombCount);
+    }
+
+    public void eruptNow(int bombCount) {
+        volcano.lavaFlow.registerTask();
+        erupting = true;
+
+        //Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, () -> {
+        int y = volcano.generator.throat ? volcano.currentHeight-2 : volcano.location.getWorld().getHighestBlockYAt(volcano.location.getBlockX(), volcano.location.getBlockZ());
+        volcano.location.getWorld().createExplosion(
+                volcano.location.getX(),
+                y,
+                volcano.location.getZ(),
+                1F * settings.damageExplo * ((volcano.currentHeight - volcano.location.getBlockY()) / volcano.generator.heightLimit),
+                volcano.generator.throat,
+                false
+        );
+        volcano.location.getWorld().createExplosion(
+                volcano.location.getX(),
+                y,
+                volcano.location.getZ(),
+                1F * settings.realDamageExplo * ((volcano.currentHeight - volcano.location.getBlockY()) / volcano.generator.heightLimit),
+                volcano.generator.throat,
+                true
+        );
+
+        Location loc = new Location(volcano.location.getWorld(), volcano.location.getBlockX(), y, volcano.location.getBlockZ());
+        //volcano.location.getWorld().playEffect(loc, Effect.SMOKE, new Random().nextInt(9), (settings.damageExplo > 40) ? 40 : settings.damageExplo);
+
+        for (int i = 0; i < bombCount; i++) {
+            volcano.bombs.launchBomb();
+        }
+
+
+        Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+" is erupting now with "+bombCount+" VolcanoBombs @ "
+                +volcano.location.getBlockX()+","+y+","+volcano.location.getBlockZ());
+        VolcanoEarthQuakes.triggerEarthQuakeForVolcano(volcano, settings.damageExplo);
+
+        volcano.updateData();
+        //}, rand.nextInt(settings.timerExplo + settings.delayExplo));
+
+        erupting = false;
     }
 }
 
 class VolcanoEruptionSettings {
-    public int timerExplo = 10;
-    public int delayExplo = 30;
-    public int damageExplo = 20;
-    public int realDamageExplo = 2;
-    public boolean isExplosive = true;
+    public int timerExplo = VolcanoEruptionDefaultSettings.timerExplo;
+    public int delayExplo = VolcanoEruptionDefaultSettings.delayExplo;
+    public int damageExplo = VolcanoEruptionDefaultSettings.damageExplo;
+    public int realDamageExplo = VolcanoEruptionDefaultSettings.realDamageExplo;
+    public boolean isExplosive = VolcanoEruptionDefaultSettings.isExplosive;
+    public int minBombCount = VolcanoEruptionDefaultSettings.minBombCount;
+    public int maxBombCount = VolcanoEruptionDefaultSettings.maxBombCount;
+}
+
+class VolcanoEruptionDefaultSettings {
+    public static int timerExplo = 10;
+    public static int delayExplo = 30;
+    public static int damageExplo = 20;
+    public static int realDamageExplo = 2;
+    public static boolean isExplosive = true;
+    public static int minBombCount = 20;
+    public static int maxBombCount = 100;
 }

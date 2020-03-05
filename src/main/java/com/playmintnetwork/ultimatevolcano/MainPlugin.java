@@ -7,6 +7,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,6 +24,9 @@ public final class MainPlugin extends JavaPlugin {
     public static boolean debug = true;
     public static Plugin plugin;
     public static VolcanoPlayerEvent vpe;
+    public static VolcanoBombListener vbl;
+    public static WorldEditPlugin worldEditPlugin;
+    public static WorldEdit worldEdit = null;
 
     // For ECMAScript Style stuff
     public Plugin self = this;
@@ -36,11 +41,31 @@ public final class MainPlugin extends JavaPlugin {
         }
     }
 
+    public void hookWorldEdit() {
+        if (Bukkit.getServer().getPluginManager().getPlugin("WorldEdit").equals(null)) {
+            Bukkit.getLogger().log(Level.SEVERE, "WorldEdit Dependency Missing!");
+        }
+
+        this.worldEditPlugin = (WorldEditPlugin) Bukkit.getServer().
+                getPluginManager().getPlugin("WorldEdit");
+
+        this.worldEdit = worldEditPlugin.getWorldEdit();
+
+
+    }
+
+    public static boolean isWorldEditHooked() {
+        return worldEdit != null;
+    }
+
     @Override
     public void onEnable() {
         plugin = this;
         // Plugin startup logic
         logMe("Initializing!");
+
+        //hookWorldEdit();
+
         logMe("Setting up Data Directory.");
         dataDir = this.getDataFolder();
         if (!dataDir.exists()) { dataDir.mkdir(); }
@@ -65,6 +90,10 @@ public final class MainPlugin extends JavaPlugin {
         vpe = new VolcanoPlayerEvent();
         vpe.registerEventHandler();
 
+        vbl = new VolcanoBombListener();
+        vbl.registerEventListener();
+        vbl.registerTask();
+
         VolcanoAutoStart.registerTask();
     }
 
@@ -75,8 +104,35 @@ public final class MainPlugin extends JavaPlugin {
         VolcanoAutoStart.statusCheckInterval = config.getInt("autoStart.statusCheckInterval", 144000);
         Bukkit.getLogger().log(Level.INFO, "loaded Volcano AutoStart Status Check Interval: "+VolcanoAutoStart.statusCheckInterval);
 
-        Volcano.defaultComposition = config.getString("defaultvolcano.composition", "STONE,100");
+        Volcano.defaultComposition = config.getString("defaultvolcano.generator.layer", "STONE,100");
         Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Composition: "+Volcano.defaultComposition);
+
+        VolcanoEruptionDefaultSettings.isExplosive = config.getBoolean("defaultvolcano.erupt.isExplosive", VolcanoEruptionDefaultSettings.isExplosive);
+        VolcanoEruptionDefaultSettings.delayExplo = config.getInt("defaultvolcano.erupt.deplayExplo", VolcanoEruptionDefaultSettings.delayExplo);
+        VolcanoEruptionDefaultSettings.damageExplo = config.getInt("defaultvolcano.erupt.damageExplo", VolcanoEruptionDefaultSettings.damageExplo);
+        VolcanoEruptionDefaultSettings.realDamageExplo = config.getInt("defaultvolcano.erupt.realDamageExplo", VolcanoEruptionDefaultSettings.realDamageExplo);
+        VolcanoEruptionDefaultSettings.timerExplo = config.getInt("defaultvolcano.erupt.timerExplo", VolcanoEruptionDefaultSettings.timerExplo);
+        VolcanoEruptionDefaultSettings.minBombCount = config.getInt("defaultvolcano.erupt.minBombCount", VolcanoEruptionDefaultSettings.minBombCount);
+        VolcanoEruptionDefaultSettings.maxBombCount = config.getInt("defaultvolcano.erupt.maxBombCount", VolcanoEruptionDefaultSettings.maxBombCount);
+
+
+        VolcanoAutoStart.defaultEruptionTimer = config.getInt("defaultvolcano.autoStart.eruptionTimer", 12000);
+        Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Eruption Timer: "+VolcanoAutoStart.defaultEruptionTimer);
+
+        VolcanoBombsDefault.bombDelay = config.getInt("defaultvolcano.bombs.delay", VolcanoBombsDefault.bombDelay);
+        Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Bombs Delay: "+VolcanoBombsDefault.bombDelay);
+
+        VolcanoBombsDefault.maxBombLaunchPower = (float) config.getDouble("defaultvolcano.bombs.maxLaunchPower", VolcanoBombsDefault.maxBombLaunchPower);
+        VolcanoBombsDefault.minBombLaunchPower = (float) config.getDouble("defaultvolcano.bombs.minLaunchPower", VolcanoBombsDefault.minBombLaunchPower);
+
+        VolcanoBombsDefault.maxBombPower = (float) config.getDouble("defaultvolcano.bombs.maxPower", VolcanoBombsDefault.maxBombLaunchPower);
+        VolcanoBombsDefault.minBombPower = (float) config.getDouble("defaultvolcano.bombs.minPower", VolcanoBombsDefault.minBombLaunchPower);
+
+        VolcanoBombsDefault.maxBombRadius = config.getInt("defaultvolcano.bombs.maxRadius", VolcanoBombsDefault.maxBombRadius);
+        VolcanoBombsDefault.minBombRadius = config.getInt("defaultvolcano.bombs.minRadius", VolcanoBombsDefault.minBombRadius);
+
+        VolcanoBombsDefault.maxCalderaPower = config.getInt("defaultvolcano.bombs.maxCalderaPower", VolcanoBombsDefault.maxBombRadius);
+        VolcanoBombsDefault.minCalderaPower = config.getInt("defaultvolcano.bombs.minCalderaPower", VolcanoBombsDefault.minBombRadius);
 
         VolcanoAutoStart.defaultEruptionTimer = config.getInt("defaultvolcano.autoStart.eruptionTimer", 12000);
         Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Eruption Timer: "+VolcanoAutoStart.defaultEruptionTimer);
@@ -85,9 +141,8 @@ public final class MainPlugin extends JavaPlugin {
         VolcanoLavaFlowDefaultSettings.delayFlowed = config.getInt("defaultvolcano.lavaflow.delayFlowed", 3);
         Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Lava Flow Timer: flow: "+VolcanoLavaFlowDefaultSettings.flowed+", delayflow: "+VolcanoLavaFlowDefaultSettings.delayFlowed);
 
-        VolcanoAutoStart.defaultCanAutoStart = config.getBoolean("default.autoStart.canAutoStart", true);
-
-
+        VolcanoAutoStart.defaultCanAutoStart = config.getBoolean("autoStart.canAutoStart", true);
+        VolcanoCrater.craterDefault = config.getInt("defaultvolcano.generator.craterRadius", VolcanoCrater.craterDefault);
 
         VolcanoAutoStartProbability.dormant.increase = config.getDouble("autostart.probability.dormant.increase", 0.05);
         VolcanoAutoStartProbability.dormant.decrease = config.getDouble("autostart.probability.dormant.decrease", 0.005);
@@ -134,6 +189,7 @@ public final class MainPlugin extends JavaPlugin {
             volcano.saveToFile();
             volcano.prepareShutdown();
         }
+
         VolcanoAutoStart.unregisterTask();
     }
 

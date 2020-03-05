@@ -31,11 +31,12 @@ public class VolcanoPlayerEvent implements Listener {
                                     volcano.stop();
                                     volcano.autoStart.status = VolcanoCurrentStatus.MAJOR_ACTIVITY;
                                 }, volcano.autoStart.eruptionTimer);
+                                event.getPlayer().sendMessage(ChatColor.GRAY+"You just woke the volcano!");
                             } else {
-                                event.getPlayer().sendMessage(ChatColor.GRAY+"Emptying Lava Bucket in Crater is NOT allowed on volcano, and configuration of it is diabled.");
+                                event.getPlayer().sendMessage(ChatColor.GRAY+"Emptying Lava Bucket in Crater is NOT allowed on volcano, and configuration of it is disabled.");
                             }
                         } else {
-                            if (disllowLavaFlowOnNonCrater) {
+                            if (disllowLavaFlowOnNonCrater && !event.getPlayer().isOp()) {
                                 event.setCancelled(true);
                                 event.getPlayer().sendMessage(ChatColor.GRAY+"Emptying Lava Bucket is NOT allowed on volcano.");
                             }

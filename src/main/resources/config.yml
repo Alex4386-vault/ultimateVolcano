@@ -14,23 +14,33 @@ autoStart:
   disallowLavaPourNonCrater: true
 
 defaultvolcano:
-
-  lavaFlow:
+  lavaflow:
     delayFlowed: 3
     flowed: 6
-
   autoStart:
     eruptionTimer: 6000
     pourLavaStart: true
-
+    canAutoStart: true
   generator:
     layer: "STONE,100"
-
+    craterRadius: 12
   erupt:
     isExplosive: true
     delayExplo: 30
     damageExplo: 20
     realDamageExplo: 2
     timerExplo: 4
+    maxBombCount: 30
+    minBombCount: 2
+  bombs:
+    maxPower: 4.0
+    minPower: 2.0
+    maxLaunchPower: 20.0
+    minLaunchPower: 2.0
+    maxRadius: 4
+    minRadius: 1
+    maxCalderaPower: 120.0
+    minCalderaPower: 40.0
+    bombDelay: 20
 
 

@@ -14,7 +14,7 @@ import java.util.List;
 public class VolcanoCommand {
     public static List<String> tabCompleteHandler(CommandSender sender, Command command, String label, String[] args) {
         ArrayList<String> queryList = new ArrayList<>();
-        List<String> commandList = Arrays.asList("start","stop","info","help","reload","reloadall","create","delete","list","near","summit");
+        List<String> commandList = Arrays.asList("start","stop","info","help","reload","reloadall","create","delete","list","near","summit","forcecool","erupt","caldera");
         String cmd = (args.length == 0) ? "" : args[0];
 
         if (args.length == 0) {
@@ -34,6 +34,18 @@ public class VolcanoCommand {
                 queryList = volcanoNameSearch(args[1]);
             }
         }  else if (permissionAndCmdChecker(cmd, "info", sender)) {
+            if (args.length == 2 && sender.hasPermission("ultimatevolcano.list")) {
+                queryList = volcanoNameSearch(args[1]);
+            }
+        } else if (permissionAndCmdChecker(cmd, "forcecool", sender)) {
+            if (args.length == 2 && sender.hasPermission("ultimatevolcano.list")) {
+                queryList = volcanoNameSearch(args[1]);
+            }
+        } else if (permissionAndCmdChecker(cmd, "caldera", sender)) {
+            if (args.length == 2 && sender.hasPermission("ultimatevolcano.list")) {
+                queryList = volcanoNameSearch(args[1]);
+            }
+        } else if (permissionAndCmdChecker(cmd, "erupt", sender)) {
             if (args.length == 2 && sender.hasPermission("ultimatevolcano.list")) {
                 queryList = volcanoNameSearch(args[1]);
             }
@@ -110,6 +122,59 @@ public class VolcanoCommand {
             }
             return true;
 
+        }  else if (permissionAndCmdChecker("forcecool", cmd, sender)) {
+            if (args.length == 2) {
+                if (MainPlugin.findVolcano(args[1]) != null) {
+                    sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano " + args[1] + " cooling started!");
+                    MainPlugin.findVolcano(args[1]).forceCool();
+                    sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano " + args[1] + " cooling ended!");
+                } else {
+                    sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Unable to find volcano " + args[1]);
+                }
+            } else {
+                sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Wrong Command Usage Detected, Please check /vol help.");
+            }
+            return true;
+
+        } else if (permissionAndCmdChecker("erupt", cmd, sender)) {
+            if (args.length >= 2) {
+                if (MainPlugin.findVolcano(args[1]) != null) {
+                    if (args.length == 3) {
+                        int bombCount = Integer.parseInt(args[2]);
+                        sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano " + args[1] + " erupting with "+bombCount+" volcanic bombs");
+                        MainPlugin.findVolcano(args[1]).erupt.eruptNow(bombCount);
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano " + args[1] + " erupting!");
+                        MainPlugin.findVolcano(args[1]).erupt.eruptNowRandom();
+                    }
+                } else {
+                    sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Unable to find volcano " + args[1]);
+                }
+            } else {
+                sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Wrong Command Usage Detected, Please check /vol help.");
+            }
+            return true;
+
+        } else if (permissionAndCmdChecker("caldera", cmd, sender)) {
+            if (args.length >= 2) {
+                if (MainPlugin.findVolcano(args[1]) != null) {
+
+                    if (args.length == 3) {
+                        sender.sendMessage(ChatColor.RED + "[Volcano] Forming Caldera on  " + ChatColor.GOLD + "Volcano " + args[1] + "!");
+                        MainPlugin.findVolcano(args[1]).generateCaldera(Float.parseFloat(args[2]));
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "[Volcano] Forming Caldera on  " + ChatColor.GOLD + "Volcano " + args[1] + "!");
+                        MainPlugin.findVolcano(args[1]).generateCalderaRandomStrength();
+                    }
+                } else {
+                    sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Unable to find volcano " + args[1]);
+                }
+
+            } else {
+                sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Wrong Command Usage Detected, Please check /vol help.");
+            }
+            return true;
+
         } else if (permissionAndCmdChecker("info", cmd, sender)) {
             if (args.length == 2) {
                 if (MainPlugin.findVolcano(args[1]) != null) {
@@ -139,7 +204,7 @@ public class VolcanoCommand {
                     sender.sendMessage(ChatColor.DARK_RED + "    Eruption: ");
                     sender.sendMessage(ChatColor.GREEN + "      eruptionEnabled: " + ChatColor.GOLD + volcano.erupt.enabled);
                     sender.sendMessage(ChatColor.GREEN + "      erupting: " + ChatColor.GOLD + volcano.erupt.erupting);
-                    sender.sendMessage(ChatColor.GOLD + "  Geology: " + ChatColor.GOLD + volcano.autoStart.getStatus());
+                    sender.sendMessage(ChatColor.GOLD + "  Seismic Status: " + ChatColor.GOLD + volcano.autoStart.getStatus());
                     sender.sendMessage(ChatColor.GREEN + "    currentHeight: " + ChatColor.GOLD + volcano.currentHeight+" ("+(volcano.currentHeight - volcano.location.getBlockY())+")");
                     sender.sendMessage(ChatColor.GREEN + "    Location: " + ChatColor.GOLD + volcano.location.getBlockX() + "," + volcano.location.getBlockY() + "," + volcano.location.getBlockZ() + " @ " + volcano.location.getWorld().getName());
                     sender.sendMessage(ChatColor.GREEN + "    craterRadius: " + ChatColor.GOLD + volcano.crater.craterRadius);
@@ -261,6 +326,8 @@ public class VolcanoCommand {
             if (args.length == 1) {
                 sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Reloading All Volcanoes!");
                 MainPlugin.reloadAll();
+                sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Reload complete!");
+                return true;
             }
         } else if (permissionAndCmdChecker("reload", cmd, sender)) {
             if (args.length == 2) {
@@ -330,6 +397,7 @@ public class VolcanoCommand {
             return true;
 
         }
+        sender.sendMessage(ChatColor.RED+"[Volcano] "+ChatColor.GOLD+"Invalid Command Detected, or you don't have a permission to use this command at all!");
         return false;
     }
 
@@ -351,6 +419,10 @@ public class VolcanoCommand {
         sender.sendMessage(explainCommand(cmd,"list","","Shows all volcanoes"));
         sender.sendMessage(explainCommand(cmd,"near","","Shows nearest volcanoes and current world's volcanoes"));
         sender.sendMessage(explainCommand(cmd,"summit","","Shows nearest volcano's summit information"));
+        sender.sendMessage(explainCommand(cmd,"forcecool","<name>","Force finish the lava flow"));
+        sender.sendMessage(explainCommand(cmd,"erupt","<name>","Force erupt the volcano now without considering the scheduled eruption"));
+        sender.sendMessage(explainCommand(cmd,"caldera","<name>","Form a caldera by creating a maximum possible explosion on volcano's top"));
+
     }
 
     private static void create(CommandSender sender, String name, int height) {

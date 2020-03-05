@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -18,6 +19,7 @@ public class Volcano {
     public File file;
     public String name;
     public boolean enabled;
+    public boolean lavaFlowEnabled = false;
     public boolean firstStart = true;
     public Location location;
     public VolcanoGenerator generator = new VolcanoGenerator();
@@ -26,6 +28,7 @@ public class Volcano {
     public VolcanoGeoThermals geoThermals = new VolcanoGeoThermals();
     public VolcanoCrater crater = new VolcanoCrater();
     public VolcanoAutoStart autoStart = new VolcanoAutoStart();
+    public VolcanoBombs bombs = new VolcanoBombs(this);
     public int zone;
     public Block summitBlock;
 
@@ -41,7 +44,7 @@ public class Volcano {
     }
 
     public Material getRandomBlock() {
-        double a = random.nextDouble()*100;
+        double a = random.nextDouble() * 100;
         double sum = 0;
         for (int i = 0; i < generator.composition.size(); i++) {
             if ((a >= sum) && (a < generator.composition.get(i).percentage)) {
@@ -77,6 +80,39 @@ public class Volcano {
                 MainPlugin.isDataInRange(location.getBlockX(), chkloc.getBlockX(), zone) &&
                 MainPlugin.isDataInRange(location.getBlockZ(), chkloc.getBlockZ(), zone)
         );
+    }
+
+    public void generateCalderaRandomStrength() {
+        float exploScale = (random.nextFloat() * (bombs.maxCalderaPower - bombs.minCalderaPower) + bombs.minCalderaPower);
+        generateCaldera(exploScale);
+    }
+
+    public void generateCaldera(float defaultExplosionScale) {
+        boolean wasEnabled = enabled;
+        if (wasEnabled) stop();
+        Bukkit.getLogger().log(Level.INFO, "Creating Caldera on Volcano "+name);
+        getRandomBlockOnCraterForLavaFlow();
+        Bukkit.getLogger().log(Level.INFO, "Updating currentHeight for Volcano "+name);
+
+        int theY = location.getWorld().getHighestBlockYAt(location);
+        Bukkit.getLogger().log(Level.INFO, "Found Volcano "+name+"'s currentHeight at "+theY);
+        Location top = new Location(location.getWorld(), location.getX(), theY, location.getZ());
+
+        Bukkit.getLogger().log(Level.INFO, "Calculating Volcano "+name+"'s Explosion Scale = ("+bombs.maxBombPower+" * (("+(theY - location.getBlockY())+"/"+(255 - location.getBlockY())+"))");
+
+        float explosionScale = defaultExplosionScale * ((theY - location.getBlockY()) / (float) (255 - location.getBlockY()));
+        Bukkit.getLogger().log(Level.INFO, "Creating explosion on Volcano "+name+"'s top @ "+top.getBlockX()+","+top.getBlockY()+","+top.getBlockZ()+" with explosion scale: "+explosionScale);
+        location.getWorld().createExplosion(top, explosionScale, true, true);
+
+        List<Location> sphereLocs = VolcanoBomb.generateSphere(top, (int) explosionScale / 4, false);
+
+        for (Location loc : sphereLocs) {
+            loc.getBlock().setType(Material.AIR);
+        }
+
+        Bukkit.getLogger().log(Level.INFO, "Created Caldera on Volcano "+name);
+        currentHeight = top.getWorld().getHighestBlockYAt(top) - location.getBlockY();
+        if (wasEnabled) start();
     }
 
     public boolean delete() {
@@ -170,6 +206,7 @@ public class Volcano {
         erupt.registerTask();
         geoThermals.registerTask();
         enabled = true;
+        lavaFlowEnabled = true;
         autoStart.status = VolcanoCurrentStatus.ERUPTING;
 
         Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" Composition Info: "+generator.exportCompositions());
@@ -182,7 +219,9 @@ public class Volcano {
         enabled = false;
 
         Bukkit.getLogger().log(Level.INFO, "unregistering Volcano "+name+" 's EventHandlers");
-        lavaFlow.unregisterTask();
+
+        int mostTicks = 0;
+
         erupt.unregisterTask();
         geoThermals.unregisterTask();
 
@@ -196,6 +235,38 @@ public class Volcano {
         autoStart.status = VolcanoCurrentStatus.MAJOR_ACTIVITY;
 
         saveToFile();
+        forceCoolCrater();
+    }
+
+    public void forceCool() {
+        Bukkit.getLogger().log(Level.INFO, "Focibily cooling volcano "+name);
+
+        Iterator<VolcanoLavaCoolData> coolDataIterator = lavaFlow.lavaCoolData.iterator();
+        while (coolDataIterator.hasNext()) {
+            VolcanoLavaCoolData coolData = coolDataIterator.next();
+            coolData.forceCoolDown();
+            coolDataIterator.remove();
+        }
+
+        forceCoolCrater();
+
+        Bukkit.getLogger().log(Level.INFO, "Unregistering volcano lavaFlow "+name);
+        lavaFlow.unregisterTask();
+
+    }
+
+    public void forceCoolCrater() {
+        Bukkit.getLogger().log(Level.INFO, "Focibily cooling crater of volcano "+name);
+
+        for (int x = 0; x < crater.xF.length; x++) {
+            for (int z = 0; z < crater.zF.length; z++) {
+                int y = location.getWorld().getHighestBlockYAt(crater.xF[x], crater.zF[z]);
+                Block craterBlock = location.getWorld().getBlockAt(crater.xF[x], y, crater.zF[z]);
+                craterBlock.setType(getRandomBlock());
+            }
+        }
+
+        Bukkit.getLogger().log(Level.INFO, "Focibily cooling crater of volcano"+name+" done.");
     }
 
     public void prepareShutdown() {
@@ -213,8 +284,10 @@ public class Volcano {
     public Block getRandomBlockOnCraterForLavaFlow() {
         int i = random.nextInt(crater.xF.length);
         crater.yF[i] = (crater.yF[i] >= location.getBlockY()+generator.heightLimit) ? location.getBlockY()+generator.heightLimit : crater.yF[i];
+
         return getBlockForLavaFlow(location.getWorld().getBlockAt(crater.xF[i], crater.yF[i], crater.zF[i]));
     }
+
 
     private Block getBlockForLavaFlow(Block block){
         Block bTmp;
@@ -240,7 +313,11 @@ public class Volcano {
                         summitBlock = block;
                     }
                 }else{
-                    currentHeight = location.getBlockY()+generator.heightLimit;
+                    if (generator.heightLimit >= 255) {
+                        currentHeight = 255;
+                    } else {
+                        currentHeight = location.getBlockY()+generator.heightLimit;
+                    }
                     break;
                 }
             }
@@ -281,6 +358,9 @@ public class Volcano {
                 volcano.erupt.settings.damageExplo = conf.getInt("erupt.damageExplo", conf.getInt("damageExplo"));
                 volcano.erupt.settings.realDamageExplo = conf.getInt("erupt.realDamageExplo", conf.getInt("erupt.damageExplo", conf.getInt("damageExplo")));
                 volcano.erupt.settings.timerExplo = conf.getInt("erupt.timerExplo", conf.getInt("timerExplo"));
+                volcano.erupt.settings.maxBombCount = conf.getInt("erupt.maxBombCount", VolcanoEruptionDefaultSettings.maxBombCount);
+                volcano.erupt.settings.minBombCount = conf.getInt("erupt.minBombCount", VolcanoEruptionDefaultSettings.minBombCount);
+
                 volcano.lavaFlow.settings.delayFlowed = conf.getInt("lavaFlow.delayFlowed", conf.getInt("delayFlowed"));
                 volcano.lavaFlow.settings.flowed = conf.getInt("lavaFlow.flowed", conf.getInt("flowed"));
                 volcano.autoStart.canAutoStart = conf.getBoolean("autoStart.canAutoStart", false);
@@ -290,6 +370,14 @@ public class Volcano {
                 volcano.generator.throat = conf.getBoolean("generator.throat", conf.getBoolean("throat"));
                 volcano.generator.loadCompositions(conf.getString("generator.layer"));
                 volcano.crater.craterRadius = conf.getInt("crater.craterRadius", conf.getInt("radius"));
+
+                volcano.bombs.minBombPower = (float) conf.getDouble("bombs.minPower", VolcanoBombsDefault.minBombPower);
+                volcano.bombs.maxBombPower = (float) conf.getDouble("bombs.maxPower", VolcanoBombsDefault.maxBombPower);
+                volcano.bombs.minBombLaunchPower = (float) conf.getDouble("bombs.minLaunchPower", VolcanoBombsDefault.minBombLaunchPower);
+                volcano.bombs.maxBombLaunchPower = (float) conf.getDouble("bombs.maxLaunchPower", VolcanoBombsDefault.maxBombLaunchPower);
+                volcano.bombs.minBombRadius = conf.getInt("bombs.minRadius", VolcanoBombsDefault.minBombRadius);
+                volcano.bombs.maxBombRadius = conf.getInt("bombs.maxRadius", VolcanoBombsDefault.maxBombRadius);
+                volcano.bombs.bombDelay = conf.getInt("bombs.delay", VolcanoBombsDefault.bombDelay);
 
                 Bukkit.getLogger().log(Level.INFO, "Running Crater Setup for Volcano "+volcano.name+"!");
                 volcano.crater.setCraters(volcano.location);
@@ -316,15 +404,21 @@ public class Volcano {
 
     }
 
+    public void preConstruct() {
+
+    }
+
     public void initialSetup() {
         Bukkit.getLogger().log(Level.INFO, "Running Initial Setup for Volcano "+name+"!");
         lavaFlow.volcano = this;
         erupt.volcano = this;
         geoThermals.volcano = this;
         autoStart.volcano = this;
+
         Bukkit.getLogger().log(Level.INFO, "Registering EventHandler for Volcano "+name+"!");
         geoThermals.registerEventHandler();
         lavaFlow.registerEventHandler();
+        erupt.registerTask();
 
         Bukkit.getLogger().log(Level.INFO, "Running Crater Setup for Volcano "+name+"!");
         crater.setCraters(location);
@@ -365,12 +459,22 @@ public class Volcano {
             conf.set("erupt.damageExplo", erupt.settings.damageExplo);
             conf.set("erupt.realDamageExplo", erupt.settings.realDamageExplo);
             conf.set("erupt.timerExplo", erupt.settings.timerExplo);
+            conf.set("erupt.minBombCount", erupt.settings.minBombCount);
+            conf.set("erupt.maxBombCount", erupt.settings.maxBombCount);
             conf.set("lavaFlow.delayFlowed", lavaFlow.settings.delayFlowed);
             conf.set("lavaFlow.flowed", lavaFlow.settings.flowed);
             conf.set("autoStart.canAutoStart", autoStart.canAutoStart);
             conf.set("autoStart.status", autoStart.getStatus());
             conf.set("autoStart.eruptionTimer", autoStart.eruptionTimer);
             conf.set("autoStart.pourLavaStart", autoStart.pourLavaStart);
+            conf.set("bombs.minLaunchPower", bombs.minBombLaunchPower);
+            conf.set("bombs.maxLaunchPower", bombs.maxBombLaunchPower);
+            conf.set("bombs.minPower", bombs.minBombPower);
+            conf.set("bombs.maxPower", bombs.maxBombPower);
+            conf.set("bombs.minRadius", bombs.minBombRadius);
+            conf.set("bombs.maxRadius", bombs.maxBombRadius);
+            conf.set("bombs.delay", bombs.bombDelay);
+
             conf.set("generator.heightLimit", generator.heightLimit);
             conf.set("generator.throat", generator.throat);
             conf.set("crater.craterRadius", crater.craterRadius);
@@ -400,7 +504,8 @@ class VolcanoComposition {
 }
 
 class VolcanoCrater {
-    public int craterRadius = 3;
+    public static int craterDefault = 10;
+    public int craterRadius = craterDefault;
     public int[] xF;
     public int[] yF;
     public int[] zF;
