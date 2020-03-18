@@ -80,9 +80,11 @@ public class VolcanoBombs {
         Iterator<VolcanoBomb> bombIterator = bombList.iterator();
         while (bombIterator.hasNext()) {
             VolcanoBomb bomb = bombIterator.next();
+
             if (!bomb.block.getLocation().getChunk().isLoaded()) {
                 bomb.block.getLocation().getChunk().load();
             }
+            bomb.block.setTicksLived(1);
 
             if (bomb.prevLocation == null) {
                 bomb.prevLocation = bomb.block.getLocation();
@@ -93,6 +95,16 @@ public class VolcanoBombs {
                 } else {
                     bomb.prevLocation = bomb.block.getLocation();
                 }
+            }
+
+            // Living over 1 min
+            if (bomb.lifeTime >= 120) {
+                Bukkit.getLogger().log(Level.INFO, "Volcano Bomb from Volcano "+volcano.name+" died.");
+                bomb.stopTrail();
+                bomb.block.remove();
+                bombIterator.remove();
+            } else {
+                bomb.lifeTime++;
             }
         }
     }

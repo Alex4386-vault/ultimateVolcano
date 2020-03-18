@@ -29,6 +29,8 @@ public class VolcanoBomb {
     public int bombDelay;
     public boolean isTrailOn = false;
 
+    public int lifeTime = 0;
+
     public boolean isLanded = false;
 
     VolcanoBomb(Volcano volcano, float bombLaunchPowerX, float bombLaunchPowerZ, float bombPower, int bombRadius, int bombDelay) {
@@ -40,9 +42,9 @@ public class VolcanoBomb {
         Random random = new Random();
         float bombLaunchPowerY = (random.nextFloat() * 2) + 4f;
 
-        int theY = volcano.location.getWorld().getHighestBlockYAt(volcano.location);
+        int theY = volcano.summitBlock.getY() >= volcano.location.getWorld().getHighestBlockYAt(volcano.location) ? volcano.summitBlock.getY() : volcano.location.getWorld().getHighestBlockYAt(volcano.location)+2;
         this.block = volcano.location.getWorld().spawnFallingBlock(
-                new Location(volcano.location.getWorld(), volcano.location.getX(), volcano.summitBlock.getY(), volcano.location.getZ()),
+                new Location(volcano.location.getWorld(), volcano.location.getX(), theY, volcano.location.getZ()),
                 VolcanoBombs.volcanoBombFallingBlockMaterial, (byte) 0
         );
 
@@ -50,6 +52,7 @@ public class VolcanoBomb {
         this.block.setGravity(true);
         this.block.setInvulnerable(true);
         this.block.setMetadata("DropItem", new FixedMetadataValue(MainPlugin.plugin, 0));
+        this.block.setDropItem(false);
 
         //MainPlugin.plugin.getLogger().log(Level.INFO, "Volcano Bomb Launched from "+volcano.name+" with power: "+bombLaunchPowerX+","+bombLaunchPowerZ+" with radius:"+bombRadius);
 
@@ -124,7 +127,7 @@ public class VolcanoBomb {
             return;
         }
 
-        MainPlugin.plugin.getLogger().log(Level.INFO, "Volcanic Bomb erupted from "+volcano.name+" just landed @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "Volcanic Bomb erupted from "+volcano.name+" just landed @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation))+" @ lifeTime: "+lifeTime+" (= "+(lifeTime/4.0)+" seconds)");
 
         if (bombRadius <= 1) {
 
@@ -156,6 +159,6 @@ public class VolcanoBomb {
     }
 
     public void explode() {
-        landingLocation.getWorld().createExplosion(landingLocation.add(0,bombRadius,0), bombPower*2, true, true);
+        landingLocation.getWorld().createExplosion(landingLocation.add(0,bombRadius,0), bombPower*2, true, !volcano.inCrater(landingLocation));
     }
 }

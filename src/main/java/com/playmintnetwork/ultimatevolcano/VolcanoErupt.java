@@ -24,7 +24,7 @@ public class VolcanoErupt {
                 if (enabled && settings.isExplosive && !erupting && volcano.enabled) {
                     eruptNowRandom();
                 }
-            }, volcano.erupt.settings.timerExplo*20L, volcano.erupt.settings.delayExplo*20L);
+            }, volcano.erupt.settings.timerExplo*volcano.lavaFlow.settings.updateRate, volcano.erupt.settings.delayExplo*volcano.lavaFlow.settings.updateRate);
         }
 
     }

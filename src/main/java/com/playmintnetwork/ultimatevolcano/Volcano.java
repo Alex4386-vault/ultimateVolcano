@@ -4,13 +4,9 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.logging.Level;
 
 public class Volcano {
@@ -35,11 +31,15 @@ public class Volcano {
     private Random random = new Random();
     public int currentHeight;
 
+    // tmp
+    public int lavaFlowCycleCount = 0;
+
     public boolean inCrater(Location chkloc) {
         return (
                 chkloc.getWorld().equals(location.getWorld()) &&
-                MainPlugin.isDataInRange(location.getBlockX(), chkloc.getBlockX(), crater.craterRadius) &&
-                MainPlugin.isDataInRange(location.getBlockZ(), chkloc.getBlockZ(), crater.craterRadius)
+                chkloc.distance(location) < crater.craterRadius
+                //MainPlugin.isDataInRange(location.getBlockX(), chkloc.getBlockX(), crater.craterRadius) &&
+                //MainPlugin.isDataInRange(location.getBlockZ(), chkloc.getBlockZ(), crater.craterRadius)
         );
     }
 
@@ -91,7 +91,7 @@ public class Volcano {
         boolean wasEnabled = enabled;
         if (wasEnabled) stop();
         Bukkit.getLogger().log(Level.INFO, "Creating Caldera on Volcano "+name);
-        getRandomBlockOnCraterForLavaFlow();
+        getRandomLavaFlowCraterBlock();
         Bukkit.getLogger().log(Level.INFO, "Updating currentHeight for Volcano "+name);
 
         int theY = location.getWorld().getHighestBlockYAt(location);
@@ -104,7 +104,7 @@ public class Volcano {
         Bukkit.getLogger().log(Level.INFO, "Creating explosion on Volcano "+name+"'s top @ "+top.getBlockX()+","+top.getBlockY()+","+top.getBlockZ()+" with explosion scale: "+explosionScale);
         location.getWorld().createExplosion(top, explosionScale, true, true);
 
-        List<Location> sphereLocs = VolcanoBomb.generateSphere(top, (int) explosionScale / 4, false);
+        List<Location> sphereLocs = VolcanoBomb.generateSphere(top, (int) explosionScale / 6, false);
 
         for (Location loc : sphereLocs) {
             loc.getBlock().setType(Material.AIR);
@@ -190,16 +190,13 @@ public class Volcano {
     }
 
     public void start() {
+        lavaFlowCycleCount = 0;
         Bukkit.getLogger().log(Level.INFO, "Starting Volcano "+name);
         if (enabled && !firstStart) { Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" was already enabled!"); return; }
         if (firstStart) {
             Bukkit.getLogger().log(Level.INFO, "Firststart of Volcano "+name+" since the bukkit boot detected");
             Block block = null;
             Bukkit.getLogger().log(Level.INFO, "Setting Initial Crater for Volcano "+name);
-            for (int i = 0 ; i < crater.xF.length ; i++){
-                block = location.getWorld().getBlockAt(crater.xF[i], crater.yF[i], crater.zF[i]);
-                block.setType(getRandomBlock());
-            }
             firstStart = false;
         }
         lavaFlow.registerTask();
@@ -259,11 +256,9 @@ public class Volcano {
         Bukkit.getLogger().log(Level.INFO, "Focibily cooling crater of volcano "+name);
 
         for (int x = 0; x < crater.xF.length; x++) {
-            for (int z = 0; z < crater.zF.length; z++) {
-                int y = location.getWorld().getHighestBlockYAt(crater.xF[x], crater.zF[z]);
-                Block craterBlock = location.getWorld().getBlockAt(crater.xF[x], y, crater.zF[z]);
-                craterBlock.setType(getRandomBlock());
-            }
+            int y = location.getWorld().getHighestBlockYAt(crater.xF[x], crater.zF[x]);
+            Block craterBlock = location.getWorld().getBlockAt(crater.xF[x], y, crater.zF[x]);
+            craterBlock.setType(getRandomBlock());
         }
 
         Bukkit.getLogger().log(Level.INFO, "Focibily cooling crater of volcano"+name+" done.");
@@ -281,8 +276,44 @@ public class Volcano {
         zone = (location.getWorld().getEnvironment() == World.Environment.NETHER) ? (((currentHeight - location.getBlockY()) * 8) + crater.craterRadius) : ((currentHeight - location.getBlockY()) * 3 + crater.craterRadius);
     }
 
-    public Block getRandomBlockOnCraterForLavaFlow() {
-        int i = random.nextInt(crater.xF.length);
+    public Block getRandomLavaFlowCraterBlock() {
+        int totalY = 0;
+        int craterOffset = 2;
+
+        for (int i = 0; i < crater.xF.length; i++) {
+            totalY += location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]);
+        }
+
+        int averageY = totalY / crater.xF.length;
+
+        List<Integer> lowerSections = new ArrayList<>();
+        for (int i = 0; i < crater.xF.length; i++) {
+            if (location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]) < averageY - random.nextInt(craterOffset)) {
+                lowerSections.add(i);
+            }
+        }
+
+        Collections.shuffle(lowerSections);
+
+        int i;
+        int yyy;
+        boolean offSetControl = random.nextDouble() < 0.8f && lowerSections.size() > 0;
+
+        if (offSetControl) {
+            i = lowerSections.get(random.nextInt(lowerSections.size()));
+        } else {
+            i = random.nextInt(crater.xF.length);
+        }
+
+        yyy = location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]);
+        if (lavaFlowCycleCount % 20 == 0) {
+            if (offSetControl) {
+                Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" is erupting lava @ Block "+location.getWorld().getName()+" "+crater.xF[i]+","+yyy+","+crater.zF[i]+" with craterOffset control: "+(averageY - craterOffset));
+            } else {
+                Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" is erupting lava @ Block "+location.getWorld().getName()+" "+crater.xF[i]+","+yyy+","+crater.zF[i]);
+            }
+        }
+
         crater.yF[i] = (crater.yF[i] >= location.getBlockY()+generator.heightLimit) ? location.getBlockY()+generator.heightLimit : crater.yF[i];
 
         return getBlockForLavaFlow(location.getWorld().getBlockAt(crater.xF[i], crater.yF[i], crater.zF[i]));
@@ -363,6 +394,8 @@ public class Volcano {
 
                 volcano.lavaFlow.settings.delayFlowed = conf.getInt("lavaFlow.delayFlowed", conf.getInt("delayFlowed"));
                 volcano.lavaFlow.settings.flowed = conf.getInt("lavaFlow.flowed", conf.getInt("flowed"));
+                volcano.lavaFlow.settings.updateRate = conf.getInt("lavaFlow.updateRate", VolcanoLavaFlowDefaultSettings.updateRate);
+
                 volcano.autoStart.canAutoStart = conf.getBoolean("autoStart.canAutoStart", false);
                 volcano.autoStart.eruptionTimer = conf.getInt("autoStart.eruptionTimer", 12000);
                 volcano.autoStart.pourLavaStart = conf.getBoolean("autoStart.pourLavaStart", false);
@@ -378,6 +411,7 @@ public class Volcano {
                 volcano.bombs.minBombRadius = conf.getInt("bombs.minRadius", VolcanoBombsDefault.minBombRadius);
                 volcano.bombs.maxBombRadius = conf.getInt("bombs.maxRadius", VolcanoBombsDefault.maxBombRadius);
                 volcano.bombs.bombDelay = conf.getInt("bombs.delay", VolcanoBombsDefault.bombDelay);
+
 
                 Bukkit.getLogger().log(Level.INFO, "Running Crater Setup for Volcano "+volcano.name+"!");
                 volcano.crater.setCraters(volcano.location);
@@ -463,6 +497,7 @@ public class Volcano {
             conf.set("erupt.maxBombCount", erupt.settings.maxBombCount);
             conf.set("lavaFlow.delayFlowed", lavaFlow.settings.delayFlowed);
             conf.set("lavaFlow.flowed", lavaFlow.settings.flowed);
+            conf.set("lavaFlow.updateRate", lavaFlow.settings.updateRate);
             conf.set("autoStart.canAutoStart", autoStart.canAutoStart);
             conf.set("autoStart.status", autoStart.getStatus());
             conf.set("autoStart.eruptionTimer", autoStart.eruptionTimer);
@@ -522,6 +557,7 @@ class VolcanoCrater {
 
         y += 2; // for a beautiful volcano
 
+        /*
         int tmpx = x - craterRadius;
         int tmpz = z - craterRadius;
         int tmpcrater = craterRadius * 2 + 1;
@@ -541,6 +577,35 @@ class VolcanoCrater {
                     num++;
                 }
             }
+        }
+        */
+
+        // crater, now in the freak'in circles.
+        List<Location> craterLocs = new ArrayList<>();
+
+        for (int tmpX = x - craterRadius; tmpX <= x + craterRadius; tmpX++) {
+            for (int tmpZ = z - craterRadius; tmpZ <= z + craterRadius; tmpZ++) {
+                double distanceSquared = (Math.pow((tmpX - x),2)) + (Math.pow((tmpZ - z),2));
+                double distance = Math.sqrt(distanceSquared);
+
+                if (craterRadius-1 < distance && distance < craterRadius+1) {
+                    craterLocs.add(new Location(location.getWorld(), tmpX, y, tmpZ));
+                }
+            }
+        }
+
+        Collections.shuffle(craterLocs);
+
+        int locCount = craterLocs.size();
+
+        xF = new int[locCount];
+        yF = new int[locCount];
+        zF = new int[locCount];
+
+        for (int i = 0; i < locCount; i++) {
+            xF[i] = craterLocs.get(i).getBlockX();
+            yF[i] = craterLocs.get(i).getBlockY();
+            zF[i] = craterLocs.get(i).getBlockZ();
         }
     }
 }

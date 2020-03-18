@@ -3,14 +3,10 @@ package com.playmintnetwork.ultimatevolcano;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockFromToEvent;
-import org.bukkit.event.entity.EntityChangeBlockEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginManager;
 
 import java.util.*;
@@ -45,7 +41,8 @@ public class VolcanoLavaFlow implements Listener {
             Material.OAK_PRESSURE_PLATE, Material.SPRUCE_PRESSURE_PLATE };
     private static Material[] explodeAndRemove = { Material.WATER, Material.LEGACY_STATIONARY_WATER, Material.SNOW, Material.SNOW_BLOCK };
     private static Material[] blockToBurned = { Material.GRASS, Material.GRASS_BLOCK, Material.GRAVEL, Material.DIRT, Material.CLAY, Material.LEGACY_CONCRETE, Material.SAND };
-    private int scheduleID = -1;
+    private int lavaFlowScheduleId = -1;
+    private int lavaCoolScheduleId = -1;
     public VolcanoLavaFlowSettings settings = new VolcanoLavaFlowSettings();
 
     public void registerEventHandler() {
@@ -276,37 +273,48 @@ public class VolcanoLavaFlow implements Listener {
 
             long timeNow = System.currentTimeMillis();
             if (System.currentTimeMillis() >= nextFlowTime) {
-                Block whereToFlow = volcano.getRandomBlockOnCraterForLavaFlow();
+                Block whereToFlow = volcano.getRandomLavaFlowCraterBlock();
                 whereToFlow.setType(Material.LAVA);
                 nextFlowTime = timeNow + settings.delayFlowed;
             }
         }
     }
 
-    public void registerTask() {
-        if (scheduleID == -1) {
-            scheduleID = MainPlugin.plugin.getServer().getScheduler().scheduleSyncRepeatingTask(MainPlugin.plugin, () -> {
+    public void coolLavaOnVolcanoIteration() {
+        Iterator<VolcanoLavaCoolData> coolDataIterator = lavaCoolData.iterator();
+        while (coolDataIterator.hasNext()) {
+            VolcanoLavaCoolData coolData = coolDataIterator.next();
+            coolData.tickPass();
+            if (coolData.tickPassed()) {
+                coolData.coolDown();
+                coolDataIterator.remove();
+            }
+        }
+    }
 
+    public void registerTask() {
+        if (lavaFlowScheduleId == -1) {
+            lavaFlowScheduleId = MainPlugin.plugin.getServer().getScheduler().scheduleSyncRepeatingTask(MainPlugin.plugin, () -> {
                 flowLavaToVolcano();
                 volcano.updateData();
-
-                Iterator<VolcanoLavaCoolData> coolDataIterator = lavaCoolData.iterator();
-                while (coolDataIterator.hasNext()) {
-                    VolcanoLavaCoolData coolData = coolDataIterator.next();
-                    coolData.tickPass();
-                    if (coolData.tickPassed()) {
-                        coolData.coolDown();
-                        coolDataIterator.remove();
-                    }
-                }
+            },0L,(long)settings.updateRate);
+        }
+        if (lavaCoolScheduleId == -1) {
+            lavaCoolScheduleId = MainPlugin.plugin.getServer().getScheduler().scheduleSyncRepeatingTask(MainPlugin.plugin, () -> {
+                coolLavaOnVolcanoIteration();
+                volcano.updateData();
             },0L,20L);
         }
     }
 
     public void unregisterTask() {
-        if (scheduleID != -1) {
-            MainPlugin.plugin.getServer().getScheduler().cancelTask(scheduleID);
-            scheduleID = -1;
+        if (lavaFlowScheduleId != -1) {
+            MainPlugin.plugin.getServer().getScheduler().cancelTask(lavaFlowScheduleId);
+            lavaFlowScheduleId = -1;
+        }
+        if (lavaCoolScheduleId != -1) {
+            MainPlugin.plugin.getServer().getScheduler().cancelTask(lavaCoolScheduleId);
+            lavaCoolScheduleId = -1;
         }
     }
 }
@@ -314,11 +322,13 @@ public class VolcanoLavaFlow implements Listener {
 class VolcanoLavaFlowDefaultSettings {
     public static int flowed = 6;
     public static int delayFlowed = 3;
+    public static int updateRate = 20;
 }
 
 class VolcanoLavaFlowSettings {
     public int flowed = VolcanoLavaFlowDefaultSettings.flowed;
     public int delayFlowed = VolcanoLavaFlowDefaultSettings.delayFlowed;
+    public int updateRate = VolcanoLavaFlowDefaultSettings.updateRate;
 }
 
 class VolcanoLavaCoolData {

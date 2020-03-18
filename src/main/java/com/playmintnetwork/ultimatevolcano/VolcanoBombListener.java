@@ -27,7 +27,7 @@ public class VolcanoBombListener implements Listener {
                 for (Volcano volcano: MainPlugin.listVolcanoes) {
                     volcano.bombs.trackAll();
                 }
-            }, 5L, 5L);
+            }, 0L, 5L);
         }
     }
 
