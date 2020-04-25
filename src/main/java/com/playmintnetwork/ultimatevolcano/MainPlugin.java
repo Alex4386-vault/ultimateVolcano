@@ -139,6 +139,7 @@ public final class MainPlugin extends JavaPlugin {
 
         VolcanoLavaFlowDefaultSettings.flowed = config.getInt("defaultvolcano.lavaflow.flowed", 6);
         VolcanoLavaFlowDefaultSettings.delayFlowed = config.getInt("defaultvolcano.lavaflow.delayFlowed", 3);
+        VolcanoLavaFlowDefaultSettings.updateRate = config.getInt("defaultvolcano.lavaflow.updateRate", 20);
         Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Lava Flow Timer: flow: "+VolcanoLavaFlowDefaultSettings.flowed+", delayflow: "+VolcanoLavaFlowDefaultSettings.delayFlowed);
 
         VolcanoAutoStart.defaultCanAutoStart = config.getBoolean("autoStart.canAutoStart", true);

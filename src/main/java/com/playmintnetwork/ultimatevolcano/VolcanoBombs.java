@@ -62,8 +62,15 @@ public class VolcanoBombs {
         float volcanoScaleVar = (volcano.currentHeight / (float)volcanoRealHeightLimit);
         //Bukkit.getLogger().log(Level.INFO, "volcanoScaleVar:"+volcanoScaleVar);
 
-        float powerX = (((random.nextFloat() * 2) - 1) * ((maxBombLaunchPower - minBombLaunchPower) + minBombLaunchPower)) * volcanoScaleVar;
-        float powerZ = (((random.nextFloat() * 2) - 1) * ((maxBombLaunchPower - minBombLaunchPower) + minBombLaunchPower)) * volcanoScaleVar;
+        double totalPower = (((maxBombLaunchPower - minBombLaunchPower) * Math.random()) + minBombLaunchPower) * volcanoScaleVar;
+
+        double randomAngle = Math.random() * Math.PI * 2;
+
+        double powerRatioX = Math.sin(randomAngle);
+        double powerRatioZ = Math.cos(randomAngle);
+
+        float powerX = (float) (totalPower * powerRatioX);
+        float powerZ = (float) (totalPower * powerRatioZ);
 
         float bombPower = random.nextFloat() * (maxBombPower - minBombPower) + minBombPower;
         int bombRadius = (int) ((Math.floor(random.nextDouble() * (maxBombRadius - minBombRadius)) * volcanoScaleVar) + minBombRadius);
@@ -89,7 +96,7 @@ public class VolcanoBombs {
             if (bomb.prevLocation == null) {
                 bomb.prevLocation = bomb.block.getLocation();
             } else {
-                if (bomb.prevLocation.equals(bomb.block.getLocation()) || (bomb.block.isOnGround() && VolcanoBombListener.groundChecker(bomb.block.getLocation(), bomb.bombRadius))) {
+                if ((bomb.prevLocation.equals(bomb.block.getLocation()) && VolcanoBombListener.groundChecker(bomb.block.getLocation(), bomb.bombRadius)) || bomb.block.isOnGround()) {
                     bomb.land();
                     bombIterator.remove();
                 } else {
@@ -99,7 +106,7 @@ public class VolcanoBombs {
 
             // Living over 1 min
             if (bomb.lifeTime >= 120) {
-                Bukkit.getLogger().log(Level.INFO, "Volcano Bomb from Volcano "+volcano.name+" died.");
+                Bukkit.getLogger().log(Level.ALL, "Volcano Bomb from Volcano "+volcano.name+" died.");
                 bomb.stopTrail();
                 bomb.block.remove();
                 bombIterator.remove();

@@ -9,6 +9,7 @@ import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -30,7 +31,6 @@ public class VolcanoBombListener implements Listener {
             }, 0L, 5L);
         }
     }
-
     public void unregisterTask() {
         if (bombTrackingScheduleId >= 0) {
             Bukkit.getScheduler().cancelTask(bombTrackingScheduleId);
@@ -47,7 +47,7 @@ public class VolcanoBombListener implements Listener {
         return (location.getBlockY() - location.getWorld().getHighestBlockYAt(location) <= offset);
     }
 
-      /*
+    /*
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         if (event.getEntity() instanceof FallingBlock) {
@@ -73,31 +73,6 @@ public class VolcanoBombListener implements Listener {
             }
         }
     }
-
-    @EventHandler
-    public void onBombFall(EntityChangeBlockEvent event) {
-        if (event.getEntity() instanceof FallingBlock)
-        {
-            Block block = event.getBlock();
-
-
-            for (Volcano volcano: MainPlugin.listVolcanoes) {
-                Iterator<VolcanoBomb> bombIterator = volcano.bombs.bombList.iterator();
-
-                while (bombIterator.hasNext()) {
-                    VolcanoBomb bomb = bombIterator.next();
-
-                    if (bomb.block.getLocation().equals(block.getLocation()) && groundChecker(bomb.block.getLocation(), bomb.bombRadius)) {
-                        bomb.land();
-                        bombIterator.remove();
-                    } else if (bomb.isLanded) {
-                        bombIterator.remove();
-                    }
-                }
-            }
-
-        }
-    }
     */
 
     @EventHandler
@@ -117,4 +92,5 @@ public class VolcanoBombListener implements Listener {
             }
         }
     }
+
 }

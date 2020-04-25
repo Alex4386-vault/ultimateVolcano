@@ -37,7 +37,10 @@ public class Volcano {
     public boolean inCrater(Location chkloc) {
         return (
                 chkloc.getWorld().equals(location.getWorld()) &&
-                chkloc.distance(location) < crater.craterRadius
+                Math.sqrt(
+                        Math.pow(location.getBlockX() - chkloc.getBlockX(),2) +
+                        Math.pow(location.getBlockZ() - chkloc.getBlockZ(),2)
+                ) < Math.pow(crater.craterRadius, 2)
                 //MainPlugin.isDataInRange(location.getBlockX(), chkloc.getBlockX(), crater.craterRadius) &&
                 //MainPlugin.isDataInRange(location.getBlockZ(), chkloc.getBlockZ(), crater.craterRadius)
         );
@@ -201,7 +204,6 @@ public class Volcano {
         }
         lavaFlow.registerTask();
         erupt.registerTask();
-        geoThermals.registerTask();
         enabled = true;
         lavaFlowEnabled = true;
         autoStart.status = VolcanoCurrentStatus.ERUPTING;
@@ -220,7 +222,6 @@ public class Volcano {
         int mostTicks = 0;
 
         erupt.unregisterTask();
-        geoThermals.unregisterTask();
 
         Bukkit.getLogger().log(Level.INFO, "disabling Volcano "+name+" 's Force Loaded Chunks");
         for (int i = 0; i < lavaFlow.lavaFlowChunks.size(); i++) {
@@ -306,7 +307,7 @@ public class Volcano {
         }
 
         yyy = location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]);
-        if (lavaFlowCycleCount % 20 == 0) {
+        if (lavaFlowCycleCount % (lavaFlow.settings.updateRate * 20) == 0) {
             if (offSetControl) {
                 Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" is erupting lava @ Block "+location.getWorld().getName()+" "+crater.xF[i]+","+yyy+","+crater.zF[i]+" with craterOffset control: "+(averageY - craterOffset));
             } else {
@@ -344,7 +345,7 @@ public class Volcano {
                         summitBlock = block;
                     }
                 }else{
-                    if (generator.heightLimit >= 255) {
+                    if (location.getBlockY()+generator.heightLimit >= 255) {
                         currentHeight = 255;
                     } else {
                         currentHeight = location.getBlockY()+generator.heightLimit;
@@ -383,7 +384,7 @@ public class Volcano {
                             conf.getInt("location.z", conf.getInt("z"))
                         );
                 volcano.geoThermals.enable = conf.getBoolean("geoThermals.enable", false);
-                volcano.geoThermals.geoThermalTicks = conf.getInt("geoThermals.geoThermalTicks", 200);
+                volcano.geoThermals.geoThermalUpdateRate = conf.getInt("geoThermals.geoThermalUpdateRate", 200);
                 volcano.erupt.settings.isExplosive = conf.getBoolean("erupt.isExplosive", true);
                 volcano.erupt.settings.delayExplo = conf.getInt("erupt.delayExplo", conf.getInt("delayExplo"));
                 volcano.erupt.settings.damageExplo = conf.getInt("erupt.damageExplo", conf.getInt("damageExplo"));
@@ -452,6 +453,9 @@ public class Volcano {
         Bukkit.getLogger().log(Level.INFO, "Registering EventHandler for Volcano "+name+"!");
         geoThermals.registerEventHandler();
         lavaFlow.registerEventHandler();
+
+        Bukkit.getLogger().log(Level.INFO, "Registering Task for Volcano "+name+"!");
+        geoThermals.registerTask();
         erupt.registerTask();
 
         Bukkit.getLogger().log(Level.INFO, "Running Crater Setup for Volcano "+name+"!");
@@ -487,7 +491,7 @@ public class Volcano {
             conf.set("location.y", location.getBlockY());
             conf.set("location.z", location.getBlockZ());
             conf.set("geoThermals.enable", geoThermals.enable);
-            conf.set("geoThermals.geoThermalsTicks", geoThermals.geoThermalTicks);
+            conf.set("geoThermals.geoThermalUpdateRate", geoThermals.geoThermalUpdateRate);
             conf.set("erupt.isExplosive", erupt.settings.isExplosive);
             conf.set("erupt.delayExplo", erupt.settings.delayExplo);
             conf.set("erupt.damageExplo", erupt.settings.damageExplo);

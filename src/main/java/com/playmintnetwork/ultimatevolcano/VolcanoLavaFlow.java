@@ -19,7 +19,7 @@ public class VolcanoLavaFlow implements Listener {
     public List<Chunk> lavaFlowChunks = new ArrayList<>();
     public List<Chunk> loadChunkList = new ArrayList<>();
     public List<VolcanoLavaCoolData> lavaCoolData = new ArrayList<>();
-    private static Material[] explode = { Material.BIRCH_LOG, Material.ACACIA_LOG, Material.DARK_OAK_LOG, Material.JUNGLE_LOG, Material.OAK_LOG, Material.SPRUCE_LOG,
+    public static Material[] explode = { Material.BIRCH_LOG, Material.ACACIA_LOG, Material.DARK_OAK_LOG, Material.JUNGLE_LOG, Material.OAK_LOG, Material.SPRUCE_LOG,
             Material.STRIPPED_ACACIA_LOG, Material.STRIPPED_BIRCH_LOG, Material.STRIPPED_DARK_OAK_LOG, Material.STRIPPED_JUNGLE_LOG, Material.STRIPPED_OAK_LOG,
             Material.STRIPPED_SPRUCE_LOG, Material.ACACIA_LEAVES, Material.BIRCH_LEAVES, Material.DARK_OAK_LEAVES, Material.JUNGLE_LEAVES, Material.OAK_LEAVES,
             Material.SPRUCE_LEAVES, Material.GRASS, Material.TALL_GRASS, Material.SUNFLOWER, Material.ALLIUM, Material.POTTED_ALLIUM, Material.AZURE_BLUET,
@@ -39,8 +39,8 @@ public class VolcanoLavaFlow implements Listener {
             Material.OAK_DOOR, Material.ACACIA_STAIRS, Material.SPRUCE_STAIRS, Material.BIRCH_STAIRS, Material.DARK_OAK_STAIRS, Material.JUNGLE_STAIRS,
             Material.OAK_STAIRS, Material.ACACIA_PRESSURE_PLATE, Material.BIRCH_PRESSURE_PLATE, Material.DARK_OAK_PRESSURE_PLATE, Material.JUNGLE_PRESSURE_PLATE,
             Material.OAK_PRESSURE_PLATE, Material.SPRUCE_PRESSURE_PLATE };
-    private static Material[] explodeAndRemove = { Material.WATER, Material.LEGACY_STATIONARY_WATER, Material.SNOW, Material.SNOW_BLOCK };
-    private static Material[] blockToBurned = { Material.GRASS, Material.GRASS_BLOCK, Material.GRAVEL, Material.DIRT, Material.CLAY, Material.LEGACY_CONCRETE, Material.SAND };
+    public static Material[] explodeAndRemove = { Material.WATER, Material.LEGACY_STATIONARY_WATER, Material.SNOW, Material.SNOW_BLOCK };
+    public static Material[] blockToBurned = { Material.GRASS, Material.GRASS_BLOCK, Material.GRAVEL, Material.DIRT, Material.CLAY, Material.LEGACY_CONCRETE, Material.SAND };
     private int lavaFlowScheduleId = -1;
     private int lavaCoolScheduleId = -1;
     public VolcanoLavaFlowSettings settings = new VolcanoLavaFlowSettings();
@@ -104,7 +104,7 @@ public class VolcanoLavaFlow implements Listener {
         block.setType(material);
     }
 
-    public Material getBlockAfterBurned(Material material) {
+    public static Material getBlockAfterBurned(Material material) {
         switch(material) {
             case SAND:
             case SANDSTONE:
@@ -131,6 +131,8 @@ public class VolcanoLavaFlow implements Listener {
 
             https://www.spigotmc.org/threads/spawn-a-campfire-particle.403246/
         */
+
+        int tickFactor = 20 / settings.updateRate;
 
         Block block = event.getBlock();
         Block toBlock = event.getToBlock();
@@ -191,14 +193,15 @@ public class VolcanoLavaFlow implements Listener {
                                     blockSet(nearByBlock, Material.AIR);
                                     explodeLava(volcano, nearByBlock);
                                     final Block theBlock = nearByBlock;
-                                    lavaCoolData.add(new VolcanoLavaCoolData(theBlock, volcano.getRandomBlock(), settings.flowed));
+                                    lavaCoolData.add(new VolcanoLavaCoolData(theBlock, volcano.getRandomBlock(),
+                                            settings.flowed * tickFactor));
                                 }
                             }
                         } else if (Arrays.asList(explodeAndRemove).contains(nearByBlock.getType())) {
                             lavaCollideWater(volcano, nearByBlock);
                             final Block theBlock = nearByBlock;
                             nearByBlock.setType(Material.LAVA);
-                            lavaCoolData.add(new VolcanoLavaCoolData(theBlock, volcano.getRandomBlock(), settings.flowed));
+                            lavaCoolData.add(new VolcanoLavaCoolData(theBlock, volcano.getRandomBlock(), settings.flowed * tickFactor));
                         }
 
                         if (Arrays.asList(blockToBurned).contains(nearByBlock.getType())) {
@@ -209,8 +212,8 @@ public class VolcanoLavaFlow implements Listener {
                             nearByBlock.setType(Material.LAVA);
                         }
                     }
-                    lavaCoolData.add(new VolcanoLavaCoolData(block, volcano.getRandomBlock(), settings.flowed));
-                    lavaCoolData.add(new VolcanoLavaCoolData(toBlock, volcano.getRandomBlock(), settings.flowed));
+                    lavaCoolData.add(new VolcanoLavaCoolData(block, volcano.getRandomBlock(), settings.flowed * tickFactor));
+                    lavaCoolData.add(new VolcanoLavaCoolData(toBlock, volcano.getRandomBlock(), settings.flowed * tickFactor));
                 }
             }
         } else if ((toBlock.getType() == Material.WATER || toBlock.getType() == Material.LEGACY_STATIONARY_WATER)
@@ -275,7 +278,7 @@ public class VolcanoLavaFlow implements Listener {
             if (System.currentTimeMillis() >= nextFlowTime) {
                 Block whereToFlow = volcano.getRandomLavaFlowCraterBlock();
                 whereToFlow.setType(Material.LAVA);
-                nextFlowTime = timeNow + settings.delayFlowed;
+                nextFlowTime = timeNow + settings.delayFlowed * (1000 * settings.updateRate / 20);
             }
         }
     }
@@ -343,7 +346,7 @@ class VolcanoLavaCoolData {
     }
 
     public void tickPass() {
-        if (this.tickPassed()) { this.coolDown(); Bukkit.getLogger().log(Level.INFO, "Cool down active!!!"); }
+        if (this.tickPassed()) { this.coolDown(); }
         else { this.ticks--; }
     }
 

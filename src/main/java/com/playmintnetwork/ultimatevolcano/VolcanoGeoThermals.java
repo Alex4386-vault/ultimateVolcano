@@ -1,87 +1,66 @@
 package com.playmintnetwork.ultimatevolcano;
 
 import org.bukkit.*;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Level;
 
 public class VolcanoGeoThermals implements Listener {
     public Volcano volcano;
-    public boolean enable = false;
+    public boolean enable = true;
     public int scheduleID = -1;
-    public int geoThermalTicks = 200;
-    public List<Block> geoThermalActiveBlocks = new ArrayList<Block>();
-    public List<Block> geoThermalAffectedBlocks = new ArrayList<Block>();
+    public int geoThermalUpdateRate = 200;
 
     public void registerEventHandler() {
         Bukkit.getServer().getPluginManager().registerEvents(this, MainPlugin.plugin);
     }
 
-    @EventHandler
-    public void onPlayerMove(PlayerMoveEvent e) {
-        if (volcano.affected(e.getPlayer().getLocation()) &&
-        (volcano.enabled || volcano.autoStart.status == VolcanoCurrentStatus.MAJOR_ACTIVITY ||
-         volcano.autoStart.status == VolcanoCurrentStatus.MINOR_ACTIVITY ||
-         volcano.autoStart.status == VolcanoCurrentStatus.ERUPTING)
-        ) {
-            Random random = new Random();
-            int x = e.getPlayer().getLocation().getBlockX();
-            int z = e.getPlayer().getLocation().getBlockZ();
-
-            int percent = random.nextInt(1000);
-            if (percent < 100) {
-                int deltaX = random.nextInt(volcano.zone);
-                int deltaZ = random.nextInt(volcano.zone);
-
-                deltaX = percent < 50 ? deltaX : -deltaX;
-                deltaZ = percent < 50 ? deltaZ : -deltaZ;
-
-                int theY = volcano.location.getWorld().getHighestBlockYAt(x+deltaX, z+deltaZ);
+    public Block getRandomGeothermallyAffectedBlock() {
+        Location loc;
+        Random random = new Random();
+        int x = volcano.location.getBlockX() + (int) (random.nextGaussian() * (volcano.crater.craterRadius * 2));
+        int z = volcano.location.getBlockZ() + (int) (random.nextGaussian() * (volcano.crater.craterRadius * 2));
+        loc = new Location(volcano.location.getWorld(),
+                x,
+                volcano.location.getWorld().getHighestBlockYAt(x,z),
+                z);
 
 
-                volcano.location.getWorld().spawnParticle(
-                        Particle.CAMPFIRE_SIGNAL_SMOKE,
-                        new Location(volcano.location.getWorld(),
-                                x+deltaX, theY, z+deltaZ),
-                        1
-                );
+        return loc.getBlock();
+    }
 
+
+    public void runGeothermalCycle() {
+        Random random = new Random();
+        int thermalCycleCount = (int) (random.nextInt(100) * (volcano.currentHeight / (double)(volcano.generator.heightLimit >= 255 ? 255:volcano.generator.heightLimit)));
+        for (int i = 0; i < thermalCycleCount; i++) {
+            if (shouldIDoIt()) {
+                Block block;
+                block = getRandomGeothermallyAffectedBlock();
+
+                showGeoThermalActivity(block);
             }
-
-
-
-
         }
     }
 
-    public boolean blockChunkHasPlayer(Block block) {
-        int howManyPlayers = 0;
-        for (int i = 0; i < block.getChunk().getEntities().length; i++) {
-            if (block.getChunk().getEntities()[i] instanceof Player) {
-                howManyPlayers++;
-            }
-        }
-        if (howManyPlayers <= 0) {
-            return false;
-        } else {
-            return true;
-        }
-    }
+    public void showGeoThermalActivity(Block block) {
+        //Bukkit.getLogger().log(Level.INFO, "Showing Geothermal Activity of "+volcano.name+" @ "+
+        //        block.getWorld()+" "+block.getX()+","+block.getY()+","+block.getZ());
 
-    public List<Block> getGeoThermalAffectedBlocks() {
-        List<Block> stuff = geoThermalActiveBlocks;
-        return stuff;
+        for (int i = 0; i < 5; i++) {
+            block.getWorld().spawnParticle(Particle.CLOUD, block.getLocation(), i);
+        }
+
+        if (Arrays.asList(VolcanoLavaFlow.blockToBurned).contains(block.getType())) {
+            block.setType(VolcanoLavaFlow.getBlockAfterBurned(block.getType()));
+        }
     }
 
     @EventHandler
@@ -118,43 +97,27 @@ public class VolcanoGeoThermals implements Listener {
         int a = new Random().nextInt(1000);
         switch(volcano.autoStart.status) {
             case DORMANT:
-                return (a < 10);
-            case MINOR_ACTIVITY:
                 return (a < 50);
-            case MAJOR_ACTIVITY:
-                return (a < 100);
-            case ERUPTING:
-                return (a < 200);
-            default:
-                return false;
-        }
-    }
-
-    /*
-    public boolean geyserProbability() {
-        int a = new Random().nextInt(1000);
-        switch(volcano.autoStart.status) {
-            case DORMANT:
-                return (a < 1);
             case MINOR_ACTIVITY:
-                return (a < 2);
+                return (a < 150);
             case MAJOR_ACTIVITY:
-                return (a < 10);
+                return (a < 400);
             case ERUPTING:
-                return (a < 15);
+                return (a < 700);
             default:
                 return false;
         }
     }
-    */
 
     public void registerTask() {
         if (scheduleID == -1) {
             scheduleID = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(
                     MainPlugin.plugin,
-                    () -> {
-                        //showGeoThermalActivity();
-                    }, 0, geoThermalTicks
+                    (Runnable) () -> {
+                        if (enable) {
+                            runGeothermalCycle();
+                        }
+                    }, 0, geoThermalUpdateRate
             );
         }
     }
@@ -163,54 +126,6 @@ public class VolcanoGeoThermals implements Listener {
         if (scheduleID != -1) {
             Bukkit.getScheduler().cancelTask(scheduleID);
             scheduleID = -1;
-            //removeGeoThermals();
         }
     }
-/*
-    public void removeGeoThermals() {
-        geoThermalActiveBlocks.clear();
-        geoThermalAffectedBlocks.clear();
-    }
-
-    public void triggerGeyser(Block block) {
-        if (shouldIDoIt()) {
-            if (geyserProbability()) {
-                int geyserHeight = new Random().nextInt(10)+1;
-                int geyserTicks = new Random().nextInt(100)+1;
-                block.getWorld().createExplosion(block.getX(), block.getY(), block.getZ(), 2F, true, false);
-                Block tempBlock = block;
-                for (int i = 1; i <= geyserHeight; i++) {
-                    tempBlock = tempBlock.getRelative(BlockFace.UP);
-                    if (tempBlock.getType().equals(Material.AIR)) {
-                        tempBlock.setType(Material.WATER);
-                    } else {
-                        geyserHeight = i;
-                    }
-                }
-                final int t = geyserHeight;
-                final Block dudet = tempBlock;
-                Bukkit.getScheduler().scheduleSyncDelayedTask(
-                        MainPlugin.plugin,
-                        () -> {
-                            Block tempyBlock = dudet;
-                            for (int i = t; i >= 1; i++) {
-                                tempyBlock.setType(Material.WATER);
-                                tempyBlock = tempyBlock.getRelative(BlockFace.DOWN);
-                            }
-                        },
-                        geyserTicks
-                );
-            }
-        }
-    }
-
-    public void showGeoThermalActivity() {
-        for (Block block:getGeoThermalAffectedBlocks()) {
-            if (shouldIDoIt()) {
-                block.getWorld().playEffect(block.getLocation(), Effect.SMOKE, 0, 30);
-                triggerGeyser(block);
-            }
-        }
-    }
-    */
 }

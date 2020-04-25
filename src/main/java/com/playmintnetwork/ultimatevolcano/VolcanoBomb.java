@@ -127,33 +127,35 @@ public class VolcanoBomb {
             return;
         }
 
-        MainPlugin.plugin.getLogger().log(Level.INFO, "Volcanic Bomb erupted from "+volcano.name+" just landed @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation))+" @ lifeTime: "+lifeTime+" (= "+(lifeTime/4.0)+" seconds)");
-
-        if (bombRadius <= 1) {
-
-            List<Location> bomb = generateSphere(loc, bombRadius, false);
-
-            for (Location bombLoc:bomb) {
-                bombLoc.getBlock().setType(volcano.getRandomBlock());
-            }
-        } else {
-            List<Location> bomb = generateSphere(loc, bombRadius, false);
-
-            for (Location bombLoc:bomb) {
-                Random random = new Random();
-                switch(random.nextInt(3)) {
-                    case 0:
-                    case 1:
-                        bombLoc.getBlock().setType(volcano.getRandomBlock());
-                    case 2:
-                        bombLoc.getBlock().setType(Material.LAVA);
-                        volcano.lavaFlow.lavaCoolData.add(new VolcanoLavaCoolData(bombLoc.getBlock(), volcano.getRandomBlock(), volcano.lavaFlow.settings.flowed));
-                }
-            }
-        }
+        MainPlugin.plugin.getLogger().log(Level.ALL, "Volcanic Bomb erupted from "+volcano.name+" just landed @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation))+" @ lifeTime: "+lifeTime+" (= "+(lifeTime/4.0)+" seconds)");
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, (Runnable) () -> {
-            explode();
+            if (bombRadius <= 1) {
+                List<Location> bomb = generateSphere(loc, bombRadius, false);
+
+                for (Location bombLoc:bomb) {
+                    bombLoc.getBlock().setType(volcano.getRandomBlock());
+                }
+            } else {
+                List<Location> bomb = generateSphere(loc, bombRadius, false);
+
+                for (Location bombLoc:bomb) {
+                    Random random = new Random();
+                    switch(random.nextInt(3)) {
+                        case 0:
+                        case 1:
+                            bombLoc.getBlock().setType(volcano.getRandomBlock());
+                        case 2:
+                            bombLoc.getBlock().setType(Material.LAVA);
+                            volcano.lavaFlow.lavaCoolData.add(new VolcanoLavaCoolData(bombLoc.getBlock(), volcano.getRandomBlock(), volcano.lavaFlow.settings.flowed));
+                    }
+                }
+            }
+
+            Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, (Runnable) () -> {
+                explode();
+            });
+
         }, 1L);
 
     }
