@@ -134,7 +134,7 @@ public class VolcanoBomb {
                 List<Location> bomb = generateSphere(loc, bombRadius, false);
 
                 for (Location bombLoc:bomb) {
-                    bombLoc.getBlock().setType(volcano.getRandomBlock());
+                    VolcanoUtils.setLocationMaterial(bombLoc, volcano.getRandomBlock(), true, false);
                 }
             } else {
                 List<Location> bomb = generateSphere(loc, bombRadius, false);
@@ -144,13 +144,15 @@ public class VolcanoBomb {
                     switch(random.nextInt(3)) {
                         case 0:
                         case 1:
-                            bombLoc.getBlock().setType(volcano.getRandomBlock());
+                            VolcanoUtils.setLocationMaterial(bombLoc, volcano.getRandomBlock(), true, false);
                         case 2:
-                            bombLoc.getBlock().setType(Material.LAVA);
-                            volcano.lavaFlow.lavaCoolData.add(new VolcanoLavaCoolData(bombLoc.getBlock(), volcano.getRandomBlock(), volcano.lavaFlow.settings.flowed));
+                            VolcanoUtils.setLocationMaterial(bombLoc, Material.LAVA, true, false);
+                            volcano.lavaFlow.lavaCoolData.add(new VolcanoLavaCoolData(bombLoc.getBlock(), volcano.getRandomBlock(), volcano.lavaFlow.settings.flowed * (20 / volcano.lavaFlow.settings.updateRate)));
                     }
                 }
             }
+
+            VolcanoUtils.updateChunk(block.getLocation());
 
             Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, (Runnable) () -> {
                 explode();

@@ -278,7 +278,7 @@ public class VolcanoLavaFlow implements Listener {
             if (System.currentTimeMillis() >= nextFlowTime) {
                 Block whereToFlow = volcano.getRandomLavaFlowCraterBlock();
                 whereToFlow.setType(Material.LAVA);
-                nextFlowTime = timeNow + settings.delayFlowed * (1000 * settings.updateRate / 20);
+                nextFlowTime = timeNow + settings.delayFlowed * (100 * settings.updateRate / 20);
             }
         }
     }

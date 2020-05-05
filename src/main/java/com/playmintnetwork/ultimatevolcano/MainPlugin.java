@@ -7,8 +7,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+//import com.sk89q.worldedit.WorldEdit;
+//import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,8 +25,8 @@ public final class MainPlugin extends JavaPlugin {
     public static Plugin plugin;
     public static VolcanoPlayerEvent vpe;
     public static VolcanoBombListener vbl;
-    public static WorldEditPlugin worldEditPlugin;
-    public static WorldEdit worldEdit = null;
+    //public static WorldEditPlugin worldEditPlugin;
+    //public static WorldEdit worldEdit = null;
 
     // For ECMAScript Style stuff
     public Plugin self = this;
@@ -41,6 +41,7 @@ public final class MainPlugin extends JavaPlugin {
         }
     }
 
+    /*
     public void hookWorldEdit() {
         if (Bukkit.getServer().getPluginManager().getPlugin("WorldEdit").equals(null)) {
             Bukkit.getLogger().log(Level.SEVERE, "WorldEdit Dependency Missing!");
@@ -57,6 +58,7 @@ public final class MainPlugin extends JavaPlugin {
     public static boolean isWorldEditHooked() {
         return worldEdit != null;
     }
+    */
 
     @Override
     public void onEnable() {

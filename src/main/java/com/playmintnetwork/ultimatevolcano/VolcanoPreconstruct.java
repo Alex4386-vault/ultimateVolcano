@@ -5,8 +5,12 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+
+import net.minecraft.server.v1_15_R1.WorldServer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +19,7 @@ import java.util.List;
 
 public class VolcanoPreconstruct {
     public Volcano volcano;
-    public static int blockUpdatesPerSecond = 60000;
+    public static int blockUpdatesPerSecond = 1000000;
 
     public VolcanoPreconstruct(Volcano volcano) {
         this.volcano = volcano;
@@ -125,7 +129,7 @@ public class VolcanoPreconstruct {
 
                     Bukkit.getScheduler().runTaskLater(MainPlugin.plugin, (Runnable) () -> {
                         recursiveIslandRadius(volcano, sender, i, index + 1, total);
-                    }, 20 * 2);
+                    }, 20);
 
                     i.remove();
                 });
@@ -221,13 +225,13 @@ public class VolcanoPreconstruct {
         if (i.hasNext()) {
             VolcanoPreconstructRadiusData preconstructRadiusData = i.next();
 
-            Bukkit.getScheduler().runTaskLater(MainPlugin.plugin, (Runnable) () -> {
+            preconstructRadiusData.calculateAffectedBlocks((Runnable) () -> {
                 Bukkit.getLogger().info("[Volcano] Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "...");
                 if (sender != null) {
                     sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "...");
                 }
 
-                int realBlockUpdates = preconstructRadiusData.calculateAffectedBlocks();
+                int realBlockUpdates = preconstructRadiusData.preconstructDataList.size();
                 int realEstimation = realBlockUpdates / blockUpdatesPerSecond;
 
                 Bukkit.getLogger().info("[Volcano] Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "... (est. "+realEstimation+" seconds, "+realBlockUpdates+" blockUpdates)");;
@@ -247,7 +251,7 @@ public class VolcanoPreconstruct {
 
                     i.remove();
                 });
-            }, 20);
+            });
 
         } else {
             Bukkit.getLogger().info("Volcano Base "+volcano.name+" Build complete!");
@@ -319,7 +323,7 @@ class VolcanoPreconstructRadiusData {
             int topY = topLocation.getBlockY();
             int z = topLocation.getBlockZ();
 
-            for (int y = topY; y >= 0 + raiseAmount && y < 256 - raiseAmount; y--) {
+            for (int y = topY; y > 1; y--) {
                 Block block = world.getBlockAt(x, y, z);
 
                 Material material = block.getType();
@@ -333,6 +337,16 @@ class VolcanoPreconstructRadiusData {
         }
 
         return preconstructDataList.size();
+    }
+
+    public void calculateAffectedBlocks(Runnable callback) {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, (Runnable) () -> {
+            calculateAffectedBlocks();
+
+            if (callback != null) {
+                callback.run();
+            }
+        }, 0l);
     }
 
     public void raiseBlocks() {
@@ -355,7 +369,23 @@ class VolcanoPreconstructRadiusData {
         Iterator<VolcanoPreconstructBlockData> preconstructBlockDataIterator = preconstructDataList.iterator();
 
         recursiveBlockUpdates(preconstructBlockDataIterator, sender, (Runnable) () -> {
+            Chunk chunk = null;
+            int i = 0;
+
+            Bukkit.getLogger().info("Updating Chunks...");
+            for (VolcanoPreconstructBlockData preconstructData: preconstructDataList) {
+                if (chunk == null) {
+                    chunk = preconstructData.block.getChunk();
+                    chunk.getWorld().refreshChunk(chunk.getX(), chunk.getZ());
+                } else {
+                    if (!chunk.equals(preconstructData.block.getChunk())) {
+                        VolcanoUtils.updateChunk(preconstructData.block);
+                    }
+                }
+            }
+
             if (callback != null) callback.run();
+
         }, 0);
     }
 
@@ -370,10 +400,17 @@ class VolcanoPreconstructRadiusData {
                     (Runnable) () -> {
                         int accumulatedUpdates = prevAccumulatedUpdates;
                         int currentAccumulatedUpdates = 0;
+                        VolcanoPreconstructBlockData preconstructBlockData = null;
                         while (i.hasNext() && currentAccumulatedUpdates < VolcanoPreconstruct.blockUpdatesPerSecond / 4) {
-                            VolcanoPreconstructBlockData preconstructBlockData = i.next();
+                            preconstructBlockData = i.next();
                             preconstructBlockData.process();
                             currentAccumulatedUpdates++;
+                        }
+
+                        if (preconstructBlockData != null) {
+                            int chunkX = preconstructBlockData.block.getLocation().getChunk().getX();
+                            int chunkZ = preconstructBlockData.block.getLocation().getChunk().getZ();
+                            preconstructBlockData.block.getWorld().refreshChunk(chunkX, chunkZ);
                         }
 
                         accumulatedUpdates += currentAccumulatedUpdates;
@@ -391,7 +428,7 @@ class VolcanoPreconstructRadiusData {
                                 1l
                         );
                     }
-            , 0l);
+            , 5l);
         } else {
             preconstructDataList.clear();
             if (sender != null) sender.sendMessage(ChatColor.RED+"[Volcano] "+ChatColor.GOLD+"Update complete.");
@@ -438,8 +475,11 @@ class VolcanoPreconstructBlockData {
         }
         */
 
-        World world = toBlock.getWorld();
-        World
+        VolcanoUtils.moveBlock(block, toBlock, true, false);
+        if (block.getLocation().getBlockY() < 10 || block.getRelative(0, -1, 0).getType().equals(Material.LAVA)) {
+            VolcanoUtils.setBlockMaterial(block, Material.LAVA, true, false);
+        }
+
 
     }
 }
