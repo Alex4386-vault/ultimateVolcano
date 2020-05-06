@@ -5,17 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.playmintnetwork</groupId>
-    <artifactId>plugin</artifactId>
+    <artifactId>ultimatevolcano</artifactId>
     <version>0.1-VULKANADVENTURE</version>
     <packaging>jar</packaging>
 
-    <name>Volcano</name>
+    <name>UltimateVolcano</name>
 
     <description>Minecraft world is SO BORING, Bring the earth's power into minecraft world!</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <url>https://gitlab.playmintnetwork.com/Mint_Mentol/volcano</url>
+    <url>https://github.com/Alex4386/ultimateVolcano</url>
 
     <build>
         <defaultGoal>clean package</defaultGoal>
