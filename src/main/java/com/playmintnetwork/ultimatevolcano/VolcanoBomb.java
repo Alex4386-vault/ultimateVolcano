@@ -163,6 +163,7 @@ public class VolcanoBomb {
     }
 
     public void explode() {
+        MainPlugin.plugin.getLogger().log(Level.ALL, "Volcanic Bomb erupted from "+volcano.name+" just exploded @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation)));
         landingLocation.getWorld().createExplosion(landingLocation.add(0,bombRadius,0), bombPower*2, true, !volcano.inCrater(landingLocation));
     }
 }
