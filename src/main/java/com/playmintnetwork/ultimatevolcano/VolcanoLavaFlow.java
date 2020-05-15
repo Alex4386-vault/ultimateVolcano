@@ -306,7 +306,7 @@ public class VolcanoLavaFlow implements Listener {
             lavaCoolScheduleId = MainPlugin.plugin.getServer().getScheduler().scheduleSyncRepeatingTask(MainPlugin.plugin, () -> {
                 coolLavaOnVolcanoIteration();
                 volcano.updateData();
-            },0L,20L);
+            },0L,(long)settings.updateRate);
         }
     }
 
