@@ -58,7 +58,7 @@ public class VolcanoGeoThermals implements Listener {
             block.getWorld().spawnParticle(Particle.CLOUD, block.getLocation(), i);
         }
 
-        if (Arrays.asList(VolcanoLavaFlow.blockToBurned).contains(block.getType())) {
+        if (Arrays.asList(VolcanoLavaFlowExplode.blockToBurned).contains(block.getType())) {
             block.setType(VolcanoLavaFlow.getBlockAfterBurned(block.getType()));
         }
     }

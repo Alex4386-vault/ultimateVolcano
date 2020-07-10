@@ -64,8 +64,10 @@ public class VolcanoBombs {
 
         double totalPower = (((maxBombLaunchPower - minBombLaunchPower) * Math.random()) + minBombLaunchPower) * volcanoScaleVar;
 
+        // get random radian angle
         double randomAngle = Math.random() * Math.PI * 2;
 
+        // super power ratio
         double powerRatioX = Math.sin(randomAngle);
         double powerRatioZ = Math.cos(randomAngle);
 
@@ -93,11 +95,19 @@ public class VolcanoBombs {
             }
             bomb.block.setTicksLived(1);
 
+            if (bomb.isLanded) {
+                bomb.stopTrail();
+                bombIterator.remove();
+            }
+
             if (bomb.prevLocation == null) {
                 bomb.prevLocation = bomb.block.getLocation();
             } else {
                 if ((bomb.prevLocation.equals(bomb.block.getLocation()) && VolcanoBombListener.groundChecker(bomb.block.getLocation(), bomb.bombRadius)) || bomb.block.isOnGround()) {
+
+                    Bukkit.getLogger().log(Level.INFO, "Volcano Bomb from Volcano "+volcano.name+" bomb land started!");
                     bomb.land();
+                    bomb.stopTrail();
                     bombIterator.remove();
                 } else {
                     bomb.prevLocation = bomb.block.getLocation();
@@ -106,7 +116,7 @@ public class VolcanoBombs {
 
             // Living over 1 min
             if (bomb.lifeTime >= 120) {
-                Bukkit.getLogger().log(Level.ALL, "Volcano Bomb from Volcano "+volcano.name+" died.");
+                //Bukkit.getLogger().log(Level.INFO, "Volcano Bomb from Volcano "+volcano.name+" died.");
                 bomb.stopTrail();
                 bomb.block.remove();
                 bombIterator.remove();

@@ -4,12 +4,13 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.event.Listener;
 
 import java.io.File;
 import java.util.*;
 import java.util.logging.Level;
 
-public class Volcano {
+public class Volcano implements Listener {
     public static File volcanoDir = new File(MainPlugin.dataDir, "Volcanoes");
     public static String defaultComposition = "STONE,100";
     public File file;
@@ -37,9 +38,9 @@ public class Volcano {
     public boolean inCrater(Location chkloc) {
         return (
                 chkloc.getWorld().equals(location.getWorld()) &&
-                Math.sqrt(
-                        Math.pow(location.getBlockX() - chkloc.getBlockX(),2) +
-                        Math.pow(location.getBlockZ() - chkloc.getBlockZ(),2)
+                (
+                    Math.pow(location.getBlockX() - chkloc.getBlockX(),2) +
+                    Math.pow(location.getBlockZ() - chkloc.getBlockZ(),2)
                 ) < Math.pow(crater.craterRadius, 2)
                 //MainPlugin.isDataInRange(location.getBlockX(), chkloc.getBlockX(), crater.craterRadius) &&
                 //MainPlugin.isDataInRange(location.getBlockZ(), chkloc.getBlockZ(), crater.craterRadius)
@@ -50,7 +51,7 @@ public class Volcano {
         double a = random.nextDouble() * 100;
         double sum = 0;
         for (int i = 0; i < generator.composition.size(); i++) {
-            if ((a >= sum) && (a < generator.composition.get(i).percentage)) {
+            if ((a >= sum) && (a < sum+generator.composition.get(i).percentage)) {
                 return generator.composition.get(i).material;
             }
             sum += generator.composition.get(i).percentage;
@@ -245,6 +246,8 @@ public class Volcano {
             coolData.forceCoolDown();
             coolDataIterator.remove();
         }
+
+        lavaFlow.lavaFlowBlocks.clear();
 
         forceCoolCrater();
 

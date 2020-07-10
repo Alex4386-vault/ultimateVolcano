@@ -116,18 +116,23 @@ public class VolcanoBomb {
     }
 
     public void land() {
-        stopTrail();
-        isLanded = true;
-
         this.landingLocation = block.getLocation();
         Location loc = block.getLocation();
 
-        if (!VolcanoBombListener.groundChecker(loc, bombRadius)) {
+        if (volcano.inCrater(loc)) {
             isLanded = true;
             return;
         }
 
-        MainPlugin.plugin.getLogger().log(Level.ALL, "Volcanic Bomb erupted from "+volcano.name+" just landed @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation))+" @ lifeTime: "+lifeTime+" (= "+(lifeTime/4.0)+" seconds)");
+        if (!VolcanoBombListener.groundChecker(loc, bombRadius)) {
+            Bukkit.getLogger().log(Level.INFO, "Volcanic Bomb erupted from "+volcano.name+" did not properly landed @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation))+" @ lifeTime: "+lifeTime+" (= "+(lifeTime/4.0)+" seconds)");
+            isLanded = true;
+            return;
+        }
+
+        stopTrail();
+
+        Bukkit.getLogger().log(Level.INFO, "Volcanic Bomb erupted from "+volcano.name+" just landed @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation))+" @ lifeTime: "+lifeTime+" (= "+(lifeTime/4.0)+" seconds)");
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, (Runnable) () -> {
             if (bombRadius <= 1) {
@@ -144,10 +149,11 @@ public class VolcanoBomb {
                     switch(random.nextInt(3)) {
                         case 0:
                         case 1:
-                            VolcanoUtils.setLocationMaterial(bombLoc, volcano.getRandomBlock(), true, false);
+                            bombLoc.getBlock().setType(volcano.getRandomBlock());
                         case 2:
-                            VolcanoUtils.setLocationMaterial(bombLoc, Material.LAVA, true, false);
+                            bombLoc.getBlock().setType(Material.LAVA);
                             volcano.lavaFlow.lavaCoolData.add(new VolcanoLavaCoolData(bombLoc.getBlock(), volcano.getRandomBlock(), volcano.lavaFlow.settings.flowed * (20 / volcano.lavaFlow.settings.updateRate)));
+                            volcano.lavaFlow.lavaFlowBlocks.add(bombLoc.getBlock());
                     }
                 }
             }
@@ -155,15 +161,20 @@ public class VolcanoBomb {
             VolcanoUtils.updateChunk(block.getLocation());
 
             Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, (Runnable) () -> {
-                explode();
-            });
+                this.explode();
+            }, 1l);
 
         }, 1L);
 
     }
 
     public void explode() {
-        MainPlugin.plugin.getLogger().log(Level.ALL, "Volcanic Bomb erupted from "+volcano.name+" just exploded @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation)));
-        landingLocation.getWorld().createExplosion(landingLocation.add(0,bombRadius,0), bombPower*2, true, !volcano.inCrater(landingLocation));
+        if (bombRadius >= 2) {
+            Bukkit.getLogger().log(Level.INFO, "Volcanic Bomb erupted from "+volcano.name+" just exploded @ "+volcano.location.getWorld().getName()+" "+this.landingLocation.getBlockX()+", "+this.landingLocation.getBlockY()+", "+this.landingLocation.getBlockZ()+" with scale of power "+bombPower+" and Radius:"+bombRadius+" with explosiveMode:"+(!volcano.inCrater(landingLocation)));
+            landingLocation.getWorld().createExplosion(landingLocation.add(0,bombRadius,0), bombPower, true, !volcano.inCrater(landingLocation));
+        }
+
+        VolcanoUtils.updateChunk(block.getLocation());
+        isLanded = true;
     }
 }
