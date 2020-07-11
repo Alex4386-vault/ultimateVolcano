@@ -5,11 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.entity.FallingBlock;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.metadata.MetadataValue;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -151,9 +147,9 @@ public class VolcanoBomb {
                         case 1:
                             bombLoc.getBlock().setType(volcano.getRandomBlock());
                         case 2:
-                            bombLoc.getBlock().setType(Material.LAVA);
                             volcano.lavaFlow.lavaCoolData.add(new VolcanoLavaCoolData(bombLoc.getBlock(), volcano.getRandomBlock(), volcano.lavaFlow.settings.flowed * (20 / volcano.lavaFlow.settings.updateRate)));
-                            volcano.lavaFlow.lavaFlowBlocks.add(bombLoc.getBlock());
+                            volcano.lavaFlow.lavaFlowingBlocks.add(bombLoc.getBlock());
+                            bombLoc.getBlock().setType(Material.LAVA);
                     }
                 }
             }
@@ -162,6 +158,7 @@ public class VolcanoBomb {
 
             Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, (Runnable) () -> {
                 this.explode();
+                volcano.tremor.showTremorActivity(this.block.getLocation().getBlock(), 0.2 * bombRadius);
             }, 1l);
 
         }, 1L);

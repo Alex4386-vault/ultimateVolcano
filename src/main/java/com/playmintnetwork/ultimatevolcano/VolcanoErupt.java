@@ -45,6 +45,8 @@ public class VolcanoErupt {
         volcano.lavaFlow.registerTask();
         erupting = true;
 
+        volcano.tremor.eruptTremor();
+
         //Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, () -> {
         int y = volcano.generator.throat ? volcano.currentHeight-2 : volcano.location.getWorld().getHighestBlockYAt(volcano.location.getBlockX(), volcano.location.getBlockZ());
         volcano.location.getWorld().createExplosion(
@@ -74,7 +76,6 @@ public class VolcanoErupt {
 
         Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+" is erupting now with "+bombCount+" VolcanoBombs @ "
                 +volcano.location.getBlockX()+","+y+","+volcano.location.getBlockZ());
-        VolcanoEarthQuakes.triggerEarthQuakeForVolcano(volcano, settings.damageExplo);
 
         volcano.updateData();
         //}, rand.nextInt(settings.timerExplo + settings.delayExplo));

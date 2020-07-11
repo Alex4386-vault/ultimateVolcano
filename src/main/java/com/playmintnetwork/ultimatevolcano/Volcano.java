@@ -26,6 +26,7 @@ public class Volcano implements Listener {
     public VolcanoCrater crater = new VolcanoCrater();
     public VolcanoAutoStart autoStart = new VolcanoAutoStart();
     public VolcanoBombs bombs = new VolcanoBombs(this);
+    public VolcanoTremor tremor = new VolcanoTremor(this);
     public int zone;
     public Block summitBlock;
 
@@ -205,6 +206,7 @@ public class Volcano implements Listener {
         }
         lavaFlow.registerTask();
         erupt.registerTask();
+        tremor.registerTask();
         enabled = true;
         lavaFlowEnabled = true;
         autoStart.status = VolcanoCurrentStatus.ERUPTING;
@@ -247,7 +249,7 @@ public class Volcano implements Listener {
             coolDataIterator.remove();
         }
 
-        lavaFlow.lavaFlowBlocks.clear();
+        lavaFlow.lavaFlowingBlocks.clear();
 
         forceCoolCrater();
 
@@ -259,9 +261,9 @@ public class Volcano implements Listener {
     public void forceCoolCrater() {
         Bukkit.getLogger().log(Level.INFO, "Focibily cooling crater of volcano "+name);
 
-        for (int x = 0; x < crater.xF.length; x++) {
-            int y = location.getWorld().getHighestBlockYAt(crater.xF[x], crater.zF[x]);
-            Block craterBlock = location.getWorld().getBlockAt(crater.xF[x], y, crater.zF[x]);
+        List<Block> craterBlocks = getCraterBlocks();
+
+        for (Block craterBlock : craterBlocks) {
             craterBlock.setType(getRandomBlock());
         }
 
@@ -273,26 +275,58 @@ public class Volcano implements Listener {
         lavaFlow.unregisterTask();
         erupt.unregisterTask();
         geoThermals.unregisterTask();
+        tremor.unregisterTask();
         Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" was successfully shutted down");
     }
 
     public void updateData() {
         zone = (location.getWorld().getEnvironment() == World.Environment.NETHER) ? (((currentHeight - location.getBlockY()) * 8) + crater.craterRadius) : ((currentHeight - location.getBlockY()) * 3 + crater.craterRadius);
     }
+    
+    public List<Block> getCraterBlocks() {
+        List<Block> craterBlocks = new ArrayList<>();
+
+        for (int i = 0; i < crater.xF.length; i++) {
+            // get highest and reduce 1 due to the actual block.
+            int currentHighestY = location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]) - 1;
+            Block block = location.getWorld().getBlockAt(crater.xF[i], currentHighestY, crater.zF[i]);
+            while (Arrays.asList(VolcanoLavaFlowExplode.explodeAndRemove).contains(block.getType()) ||
+                    block.getType() == Material.AIR) {
+                currentHighestY--;
+                block = block.getRelative(0,-1,0);
+            }
+            craterBlocks.add(block);
+        }
+
+        return craterBlocks;
+    }
 
     public Block getRandomLavaFlowCraterBlock() {
         int totalY = 0;
         int craterOffset = 2;
 
+        int[] highestY = new int[crater.xF.length];
+
         for (int i = 0; i < crater.xF.length; i++) {
-            totalY += location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]);
+            // get highest and reduce 1 due to the actual block.
+            int currentHighestY = location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]) - 1;
+            Block block = location.getWorld().getBlockAt(crater.xF[i], currentHighestY, crater.zF[i]);
+            while (Arrays.asList(VolcanoLavaFlowExplode.explodeAndRemove).contains(block.getType()) ||
+                    block.getType() == Material.AIR) {
+                currentHighestY--;
+                block = block.getRelative(0,-1,0);
+            }
+            currentHighestY++;
+            highestY[i] = currentHighestY;
+            
+            totalY += currentHighestY;
         }
 
         int averageY = totalY / crater.xF.length;
 
         List<Integer> lowerSections = new ArrayList<>();
         for (int i = 0; i < crater.xF.length; i++) {
-            if (location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]) < averageY - random.nextInt(craterOffset)) {
+            if (highestY[i] < averageY - random.nextInt(craterOffset)) {
                 lowerSections.add(i);
             }
         }
@@ -309,7 +343,7 @@ public class Volcano implements Listener {
             i = random.nextInt(crater.xF.length);
         }
 
-        yyy = location.getWorld().getHighestBlockYAt(crater.xF[i], crater.zF[i]);
+        yyy = highestY[i];
         if (lavaFlowCycleCount % (lavaFlow.settings.updateRate * 20) == 0) {
             if (offSetControl) {
                 Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" is erupting lava @ Block "+location.getWorld().getName()+" "+crater.xF[i]+","+yyy+","+crater.zF[i]+" with craterOffset control: "+(averageY - craterOffset));
@@ -318,9 +352,9 @@ public class Volcano implements Listener {
             }
         }
 
-        crater.yF[i] = (crater.yF[i] >= location.getBlockY()+generator.heightLimit) ? location.getBlockY()+generator.heightLimit : crater.yF[i];
+        crater.yF[i] = highestY[i];
 
-        return getBlockForLavaFlow(location.getWorld().getBlockAt(crater.xF[i], crater.yF[i], crater.zF[i]));
+        return getBlockForLavaFlow(location.getWorld().getBlockAt(crater.xF[i], highestY[i], crater.zF[i]));
     }
 
 
@@ -554,12 +588,16 @@ class VolcanoCrater {
 
     public void setCraters(Location location) {
         int x = location.getBlockX();
+        /*
         int y = (location.getBlockY() < 63
                 &&
                 (location.getWorld().getBlockAt(location).getType().equals(Material.WATER)
                     || location.getWorld().getBlockAt(location).getType().equals(Material.LEGACY_STATIONARY_WATER)))
                 ? location.getWorld().getHighestBlockYAt(location.getBlockX(), location.getBlockZ()) :
                 location.getBlockY();
+        */
+        // override. lava can now flow under water.
+        int y = location.getBlockY();
         int z = location.getBlockZ();
 
         y += 2; // for a beautiful volcano

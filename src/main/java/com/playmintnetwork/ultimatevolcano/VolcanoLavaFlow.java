@@ -3,22 +3,20 @@ package com.playmintnetwork.ultimatevolcano;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.FallingBlock;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
-import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.plugin.PluginManager;
 
 import java.util.*;
-import java.util.logging.Level;
 
 public class VolcanoLavaFlow implements Listener {
     public Volcano volcano;
     private Random rand = new Random();
     public List<Chunk> lavaFlowChunks = new ArrayList<>();
     public List<VolcanoLavaCoolData> lavaCoolData = new ArrayList<>();
-    public List<Block> lavaFlowBlocks = new ArrayList<>();
+    public List<Block> lavaFlowingBlocks = new ArrayList<>();
     private int lavaFlowScheduleId = -1;
     private int lavaCoolScheduleId = -1;
     public VolcanoLavaFlowSettings settings = new VolcanoLavaFlowSettings();
@@ -134,25 +132,12 @@ public class VolcanoLavaFlow implements Listener {
     }
 
     @EventHandler
-    public void onBlockGrow(BlockGrowEvent event) {
-        if (lavaFlowBlocks.contains(event.getBlock())) {
-            Block block = event.getBlock();
-            int tickFactor = 20 / settings.updateRate;
-
-            if (event.getNewState().getType() == Material.OBSIDIAN) {
+    public void onBlockForm(BlockFormEvent event) {
+        if (lavaFlowingBlocks.contains(event.getBlock())) {
+            if (Arrays.asList(VolcanoLavaFlowExplode.lavaCooled).contains(event.getNewState().getType())) {
+                Block block = event.getBlock();
                 block.setType(Material.LAVA);
-                lavaFlowBlocks.add(block);
-                lavaCoolData.add(new VolcanoLavaCoolData(block, volcano.getRandomBlock(), settings.flowed * tickFactor));
 
-                Block underBlock = block.getRelative(0,-1,0);
-                if (
-                    underBlock.getType() == Material.WATER ||
-                    underBlock.getType() == Material.LEGACY_STATIONARY_WATER
-                ) {
-                    underBlock.setType(Material.LAVA);
-                    lavaFlowBlocks.add(block);
-                    lavaCoolData.add(new VolcanoLavaCoolData(underBlock, volcano.getRandomBlock(), settings.flowed * tickFactor));
-                }
             }
         }
     }
@@ -176,7 +161,7 @@ public class VolcanoLavaFlow implements Listener {
         Block toBlock = event.getToBlock();
 
         // this is lava. flow it.
-        if (lavaFlowBlocks.contains(block)) {
+        if (lavaFlowingBlocks.contains(block)) {
 
             // force load chunk.
             if (!volcano.isChunkLoaded()) volcano.location.getChunk().load();
@@ -224,33 +209,27 @@ public class VolcanoLavaFlow implements Listener {
                 if (Arrays.asList(VolcanoLavaFlowExplode.explode).contains(nearByBlock.getType())) {
                     if (volcano.affected(nearByBlock.getLocation())) {
                         if (Arrays.asList(VolcanoLavaFlowExplode.explode).contains(nearByBlock.getType())) {
-                            blockSet(nearByBlock, Material.AIR);
+                            blockSet(nearByBlock, Material.LAVA);
                             explodeLava(nearByBlock);
                             final Block theBlock = nearByBlock;
                             lavaCoolData.add(new VolcanoLavaCoolData(theBlock, volcano.getRandomBlock(),
                                     settings.flowed * tickFactor));
-                            lavaFlowBlocks.add(theBlock);
+                            lavaFlowingBlocks.add(theBlock);
                         }
                     }
                 } else if (Arrays.asList(VolcanoLavaFlowExplode.explodeAndRemove).contains(nearByBlock.getType())) {
                     lavaCollideWater(nearByBlock);
-                    final Block theBlock = nearByBlock;
-                    nearByBlock.setType(Material.LAVA);
-                    lavaCoolData.add(new VolcanoLavaCoolData(theBlock, volcano.getRandomBlock(), settings.flowed * tickFactor));
-                    lavaFlowBlocks.add(theBlock);
+                    //final Block theBlock = nearByBlock;
+                    //nearByBlock.setType(Material.AIR);
                 }
 
                 if (Arrays.asList(VolcanoLavaFlowExplode.blockToBurned).contains(nearByBlock.getType())) {
                     nearByBlock.setType(getBlockAfterBurned(nearByBlock.getType()));
                 }
-
-                if (nearByBlock.getType() == Material.COBBLESTONE || nearByBlock.getType() == Material.OBSIDIAN) {
-                    nearByBlock.setType(Material.LAVA);
-                }
             }
 
             lavaCoolData.add(new VolcanoLavaCoolData(toBlock, volcano.getRandomBlock(), settings.flowed * tickFactor));
-            lavaFlowBlocks.add(toBlock);
+            lavaFlowingBlocks.add(toBlock);
 
         }
     }
@@ -259,18 +238,19 @@ public class VolcanoLavaFlow implements Listener {
 
     public void flowLavaToVolcano() {
         if (volcano.enabled) {
-            Location posParticles = new Location(volcano.location.getWorld(), volcano.location.getX(), volcano.summitBlock.getY(), volcano.location.getZ());
-
-            volcano.location.getWorld().spawnParticle(Particle.CAMPFIRE_SIGNAL_SMOKE, posParticles, 750, 0.8D, 10.0D, 0.8D, 0.01D);
+            Location posParticles = new Location(volcano.location.getWorld(), volcano.location.getX(), volcano.location.getWorld().getHighestBlockYAt(volcano.location.getBlockX(), volcano.location.getBlockZ()), volcano.location.getZ());
 
             long timeNow = System.currentTimeMillis();
             if (System.currentTimeMillis() >= nextFlowTime) {
                 int tickFactor = 20 / settings.updateRate;
 
+                for (int i = 0; i < 100; i++)
+                    volcano.location.getWorld().spawnParticle(Particle.CAMPFIRE_SIGNAL_SMOKE, posParticles, 0, ((rand.nextDouble() - 0.5) * 2), 1.4d+((rand.nextDouble() - 0.5) * 2), ((rand.nextDouble() - 0.5) * 2));
+
                 Block whereToFlow = volcano.getRandomLavaFlowCraterBlock();
                 whereToFlow.setType(Material.LAVA);
                 lavaCoolData.add(new VolcanoLavaCoolData(whereToFlow, volcano.getRandomBlock(), settings.flowed * tickFactor));
-                lavaFlowBlocks.add(whereToFlow);
+                lavaFlowingBlocks.add(whereToFlow);
                 nextFlowTime = timeNow + settings.delayFlowed * (1000 * settings.updateRate / 20);
             }
         }
@@ -282,7 +262,9 @@ public class VolcanoLavaFlow implements Listener {
             VolcanoLavaCoolData coolData = coolDataIterator.next();
             coolData.tickPass();
             if (coolData.tickPassed()) {
-                lavaFlowBlocks.remove(coolData.block);
+                if (lavaFlowingBlocks.contains(coolData.block)) {
+                    lavaFlowingBlocks.remove(coolData.block);
+                }
                 coolData.coolDown();
                 coolDataIterator.remove();
             }
@@ -353,7 +335,8 @@ interface VolcanoLavaFlowExplode {
             Material.OAK_DOOR, Material.ACACIA_STAIRS, Material.SPRUCE_STAIRS, Material.BIRCH_STAIRS, Material.DARK_OAK_STAIRS, Material.JUNGLE_STAIRS,
             Material.OAK_STAIRS, Material.ACACIA_PRESSURE_PLATE, Material.BIRCH_PRESSURE_PLATE, Material.DARK_OAK_PRESSURE_PLATE, Material.JUNGLE_PRESSURE_PLATE,
             Material.OAK_PRESSURE_PLATE, Material.SPRUCE_PRESSURE_PLATE };
-    public static Material[] explodeAndRemove = { Material.WATER, Material.LEGACY_STATIONARY_WATER, Material.SNOW, Material.SNOW_BLOCK };
+    public static Material[] explodeAndRemove = { Material.WATER, Material.LEGACY_STATIONARY_WATER, Material.SNOW, Material.SNOW_BLOCK, Material.KELP, Material.KELP_PLANT };
+    public static Material[] lavaCooled = { Material.COBBLESTONE, Material.STONE, Material.OBSIDIAN };
     public static Material[] blockToBurned = { Material.GRASS, Material.GRASS_BLOCK, Material.GRAVEL, Material.DIRT, Material.CLAY, Material.LEGACY_CONCRETE, Material.SAND };
 }
 
