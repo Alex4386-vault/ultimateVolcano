@@ -73,8 +73,10 @@ public class VolcanoErupt {
             volcano.bombs.launchBomb();
         }
 
+        volcano.generateSmoke(bombCount * 10);
 
-        Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+" is erupting now with "+bombCount+" VolcanoBombs @ "
+
+        Bukkit.getLogger().log(Level.INFO, "[Volcano "+volcano.name+" BombLaunch] Volcano "+volcano.name+" is erupting now with "+bombCount+" VolcanoBombs @ "
                 +volcano.location.getBlockX()+","+y+","+volcano.location.getBlockZ());
 
         volcano.updateData();

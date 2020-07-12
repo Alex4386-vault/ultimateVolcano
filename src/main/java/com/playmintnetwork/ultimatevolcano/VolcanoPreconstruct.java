@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 
 public class VolcanoPreconstruct {
     public Volcano volcano;
@@ -97,7 +98,7 @@ public class VolcanoPreconstruct {
             pastStageProcessSeconds += expectedBlockUpdateSeconds;
         }
 
-        Bukkit.getLogger().info("Estimated time to build volcano base "+volcano.name+": "+pastStageProcessSeconds+" seconds with total stages of "+preconstructRadiusDataList.size()+" with "+totalBlockUpdates+" blockUpdates");
+        MainPlugin.plugin.getLogger().log(Level.INFO, "Estimated time to build volcano base "+volcano.name+": "+pastStageProcessSeconds+" seconds with total stages of "+preconstructRadiusDataList.size()+" with "+totalBlockUpdates+" blockUpdates");
         sender.sendMessage("Estimated time to build volcano base "+volcano.name+": "+pastStageProcessSeconds+" seconds with total stages of "+preconstructRadiusDataList.size()+" with "+totalBlockUpdates+" blockUpdates");
 
         recursiveRadius(volcano, sender, radiusDataIterator, 1, preconstructRadiusDataList.size());
@@ -108,7 +109,7 @@ public class VolcanoPreconstruct {
             VolcanoPreconstructRadiusData preconstructRadiusData = i.next();
 
             Bukkit.getScheduler().runTaskLater(MainPlugin.plugin, (Runnable) () -> {
-                Bukkit.getLogger().info("[Volcano] Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + "...");
+                MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano] Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + "...");
                 if (sender != null) {
                     sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + "...");
                 }
@@ -116,13 +117,13 @@ public class VolcanoPreconstruct {
                 int realBlockUpdates = preconstructRadiusData.calculateAffectedBlocks();
                 int realEstimation = realBlockUpdates / blockUpdatesPerSecond;
 
-                Bukkit.getLogger().info("[Volcano] Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + "... (est. "+realEstimation+" seconds, "+realBlockUpdates+" blockUpdates)");;
+                MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano] Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + "... (est. "+realEstimation+" seconds, "+realBlockUpdates+" blockUpdates)");;
                 if (sender != null) {
                     sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + "... (est. "+realEstimation+" seconds, "+realBlockUpdates+" blockUpdates)");;
                 }
 
                 preconstructRadiusData.raiseBlocks(sender, (Runnable) () -> {
-                    Bukkit.getLogger().info("[Volcano] Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + " complete!");
+                    MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano] Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + " complete!");
                     if (sender != null) {
                         sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano Base " + volcano.name + " Generation Stage " + index + "/" + total + " complete! est. 2 seconds");
                     }
@@ -136,7 +137,7 @@ public class VolcanoPreconstruct {
             }, 20);
 
         } else {
-            Bukkit.getLogger().info("Volcano Base "+volcano.name+" Build complete!");
+            MainPlugin.plugin.getLogger().log(Level.INFO, "Volcano Base "+volcano.name+" Build complete!");
             if (sender != null) sender.sendMessage("Volcano Base "+volcano.name+" Build complete!");
         }
     }
@@ -214,7 +215,7 @@ public class VolcanoPreconstruct {
             pastStageProcessSeconds += expectedBlockUpdateSeconds;
         }
 
-        Bukkit.getLogger().info("Estimated time to build volcano base "+volcano.name+": "+pastStageProcessSeconds+" seconds with total stages of "+preconstructRadiusDataList.size()+" with "+totalBlockUpdates+" blockUpdates");
+        MainPlugin.plugin.getLogger().log(Level.INFO, "Estimated time to build volcano base "+volcano.name+": "+pastStageProcessSeconds+" seconds with total stages of "+preconstructRadiusDataList.size()+" with "+totalBlockUpdates+" blockUpdates");
         sender.sendMessage("Estimated time to build volcano base "+volcano.name+": "+pastStageProcessSeconds+" seconds with total stages of "+preconstructRadiusDataList.size()+" with "+totalBlockUpdates+" blockUpdates");
 
         recursiveIslandRadius(volcano, sender, radiusDataIterator, 1, preconstructRadiusDataList.size());
@@ -226,7 +227,7 @@ public class VolcanoPreconstruct {
             VolcanoPreconstructRadiusData preconstructRadiusData = i.next();
 
             preconstructRadiusData.calculateAffectedBlocks((Runnable) () -> {
-                Bukkit.getLogger().info("[Volcano] Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "...");
+                MainPlugin.plugin.getLogger().log(Level.INFO, "Volcano "+volcano.name+" Preconstruct] Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "...");
                 if (sender != null) {
                     sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "...");
                 }
@@ -234,13 +235,13 @@ public class VolcanoPreconstruct {
                 int realBlockUpdates = preconstructRadiusData.preconstructDataList.size();
                 int realEstimation = realBlockUpdates / blockUpdatesPerSecond;
 
-                Bukkit.getLogger().info("[Volcano] Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "... (est. "+realEstimation+" seconds, "+realBlockUpdates+" blockUpdates)");;
+                MainPlugin.plugin.getLogger().log(Level.INFO, "Volcano "+volcano.name+" Preconstruct] Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "... (est. "+realEstimation+" seconds, "+realBlockUpdates+" blockUpdates)");;
                 if (sender != null) {
                     sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + "... (est. "+realEstimation+" seconds, "+realBlockUpdates+" blockUpdates)");
                 }
 
                 preconstructRadiusData.raiseBlocks(sender, (Runnable) () -> {
-                    Bukkit.getLogger().info("[Volcano] Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + " complete!");
+                    MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+volcano.name+" Preconstruct] Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + " complete!");
                     if (sender != null) {
                         sender.sendMessage(ChatColor.RED + "[Volcano] " + ChatColor.GOLD + "Volcano Island " + volcano.name + " Generation Stage " + index + "/" + total + " complete! est. 2 seconds");
                     }
@@ -254,7 +255,7 @@ public class VolcanoPreconstruct {
             });
 
         } else {
-            Bukkit.getLogger().info("Volcano Base "+volcano.name+" Build complete!");
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+volcano.name+" Preconstruct] Volcano Base "+volcano.name+" Build complete!");
             if (sender != null) sender.sendMessage("Volcano Base "+volcano.name+" Build complete!");
         }
     }
@@ -372,7 +373,7 @@ class VolcanoPreconstructRadiusData {
             Chunk chunk = null;
             int i = 0;
 
-            Bukkit.getLogger().info("Updating Chunks...");
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+volcano.name+" Preconstruct] Updating Chunks...");
             for (VolcanoPreconstructBlockData preconstructData: preconstructDataList) {
                 if (chunk == null) {
                     chunk = preconstructData.block.getChunk();
@@ -416,7 +417,7 @@ class VolcanoPreconstructRadiusData {
                         accumulatedUpdates += currentAccumulatedUpdates;
                         if (accumulatedUpdates % VolcanoPreconstruct.blockUpdatesPerSecond < 100) {
                             if (sender != null) sender.sendMessage(ChatColor.RED+"[Volcano] "+ChatColor.GOLD+"Currently updating "+prevAccumulatedUpdates+"th block");
-                            Bukkit.getLogger().info("[Volcano] Currently updating "+prevAccumulatedUpdates+"th block");
+                            MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+volcano.name+" Preconstruct] Currently updating "+prevAccumulatedUpdates+"th block");
                         }
 
                         int finalAccumulatedUpdates = accumulatedUpdates;

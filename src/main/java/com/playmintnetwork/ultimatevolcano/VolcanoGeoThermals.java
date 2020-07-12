@@ -51,8 +51,8 @@ public class VolcanoGeoThermals implements Listener {
     }
 
     public void showGeoThermalActivity(Block block) {
-        //Bukkit.getLogger().log(Level.INFO, "Showing Geothermal Activity of "+volcano.name+" @ "+
-        //        block.getWorld()+" "+block.getX()+","+block.getY()+","+block.getZ());
+        Bukkit.getLogger().log(Level.FINEST, "Showing Geothermal Activity of "+volcano.name+" @ "+
+                block.getWorld()+" "+block.getX()+","+block.getY()+","+block.getZ());
 
         for (int i = 0; i < 5; i++) {
             block.getWorld().spawnParticle(Particle.CLOUD, block.getLocation(), 0, 0.0, 1.0+(new Random().nextDouble()), 0.0);

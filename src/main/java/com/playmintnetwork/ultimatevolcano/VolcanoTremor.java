@@ -62,19 +62,26 @@ public class VolcanoTremor {
 
         AtomicInteger scheduleID = new AtomicInteger();
         Runnable tremorRunnable = (Runnable) () -> {
-            Location location = player.getLocation();
+            if (player.isOnGround()) {
+                float xDelta = (float) ((Math.random() - 0.5) * 0.04 * power);
+                float zDelta = (float) ((Math.random() - 0.5) * 0.04 * power);
+                float yawDelta = (float) ((Math.random() - 0.5) * 0.4 * power);
+                float pitchDelta = (float) ((Math.random() - 0.5) * 0.4 * power);
 
-            location.setYaw((float) (location.getYaw() + (Math.random() - 0.5) * 0.4 * power));
-            location.setPitch((float) (location.getPitch() + (Math.random() - 0.5) * 0.4 * power));
-            location.setX(location.getX() + (Math.random() - 0.5) * 0.04 * power);
-            location.setZ(location.getZ() + (Math.random() - 0.5) * 0.04 * power);
+                Location location = new Location(player.getWorld(),
+                        player.getLocation().getX() + xDelta,
+                        player.getLocation().getY(),
+                        player.getLocation().getZ() + zDelta,
+                        player.getLocation().getYaw() + yawDelta,
+                        player.getLocation().getPitch() + pitchDelta);
 
-            player.teleport(location);
+                player.teleport(location);
+            }
 
             loop.getAndIncrement();
 
             if (loop.get() > termorLength.get()) {
-                Bukkit.getLogger().log(Level.INFO, player.getDisplayName()+" termor sequence Pass.");
+                MainPlugin.plugin.getLogger().log(Level.INFO, player.getDisplayName()+" termor sequence Pass.");
                 Bukkit.getScheduler().cancelTask(scheduleID.get());
             }
         };
@@ -83,7 +90,7 @@ public class VolcanoTremor {
     }
 
     public void showTremorActivity(Block block, double power) {
-        MainPlugin.plugin.getLogger().log(Level.INFO, "running tremor for volcano " + volcano.name + " with power " + power + ".");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+volcano.name+" Tremor] Running tremor for volcano " + volcano.name + " with power " + power + ".");
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             int radius = volcano.zone;
@@ -99,7 +106,7 @@ public class VolcanoTremor {
                 impactFactor = impactFactor > 0.2 ? impactFactor : 0;
 
                 if (impactFactor > 0) {
-                    tremorOnPlayer(player, (int) (Math.random() * 4 * impactFactor), power * impactFactor);
+                    tremorOnPlayer(player, (int) ( 2 + (Math.random() * 3)), power * impactFactor);
                 }
             }
         }
@@ -126,11 +133,11 @@ public class VolcanoTremor {
             case DORMANT:
                 return 0.001;
             case MINOR_ACTIVITY:
-                return 0.01;
-            case MAJOR_ACTIVITY:
                 return 0.1;
-            case ERUPTING:
+            case MAJOR_ACTIVITY:
                 return 1;
+            case ERUPTING:
+                return 10;
             default:
                 return 0;
         }

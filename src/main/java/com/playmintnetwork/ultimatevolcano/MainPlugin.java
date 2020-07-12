@@ -44,7 +44,7 @@ public final class MainPlugin extends JavaPlugin {
     /*
     public void hookWorldEdit() {
         if (Bukkit.getServer().getPluginManager().getPlugin("WorldEdit").equals(null)) {
-            Bukkit.getLogger().log(Level.SEVERE, "WorldEdit Dependency Missing!");
+            plugin.getLogger().log(Level.SEVERE, "WorldEdit Dependency Missing!");
         }
 
         this.worldEditPlugin = (WorldEditPlugin) Bukkit.getServer().
@@ -64,30 +64,30 @@ public final class MainPlugin extends JavaPlugin {
     public void onEnable() {
         plugin = this;
         // Plugin startup logic
-        logMe("Initializing!");
+        logMe("[Core] Initializing!");
 
         //hookWorldEdit();
 
-        logMe("Setting up Data Directory.");
+        logMe("[Core] Setting up Data Directory.");
         dataDir = this.getDataFolder();
         if (!dataDir.exists()) { dataDir.mkdir(); }
 
-        logMe("Setting up Volcano Data Directory.");
+        logMe("[Core] Setting up Volcano Data Directory.");
         if (!Volcano.volcanoDir.exists()) { Volcano.volcanoDir.mkdir(); }
 
-        logMe("Writing Default plugin configuration if not exists....");
+        logMe("[Core] Writing Default plugin configuration if not exists....");
         this.saveDefaultConfig();
 
-        logMe("Writing complete!");
+        logMe("[Core] Writing complete!");
 
-        logMe("Loading plugin configuration...");
+        logMe("[Core] Loading plugin configuration...");
         loadPluginConfiguration();
 
-        logMe("Data Directory setup complete.");
+        logMe("[Core] Data Directory setup complete.");
 
-        logMe("Loading Volcanoes");
+        logMe("[Core] Loading Volcanoes");
         loadVolcanoes();
-        logMe("Volcanoes Loaded.");
+        logMe("[Core] Volcanoes Loaded.");
 
         vpe = new VolcanoPlayerEvent();
         vpe.registerEventHandler();
@@ -100,14 +100,14 @@ public final class MainPlugin extends JavaPlugin {
     }
 
     public static void loadPluginConfiguration() {
-        Bukkit.getLogger().log(Level.INFO, "Loading Plugin Configuration:");
+        plugin.getLogger().log(Level.INFO, "[Core] Loading Plugin Configuration:");
 
         FileConfiguration config = MainPlugin.plugin.getConfig();
         VolcanoAutoStart.statusCheckInterval = config.getInt("autoStart.statusCheckInterval", 144000);
-        Bukkit.getLogger().log(Level.INFO, "loaded Volcano AutoStart Status Check Interval: "+VolcanoAutoStart.statusCheckInterval);
+        plugin.getLogger().log(Level.INFO, "[Core] Loaded Volcano AutoStart Status Check Interval: "+VolcanoAutoStart.statusCheckInterval);
 
         Volcano.defaultComposition = config.getString("defaultvolcano.generator.layer", "STONE,100");
-        Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Composition: "+Volcano.defaultComposition);
+        plugin.getLogger().log(Level.INFO, "[Core] Loaded Volcano Default Composition: "+Volcano.defaultComposition);
 
         VolcanoEruptionDefaultSettings.isExplosive = config.getBoolean("defaultvolcano.erupt.isExplosive", VolcanoEruptionDefaultSettings.isExplosive);
         VolcanoEruptionDefaultSettings.delayExplo = config.getInt("defaultvolcano.erupt.deplayExplo", VolcanoEruptionDefaultSettings.delayExplo);
@@ -119,10 +119,10 @@ public final class MainPlugin extends JavaPlugin {
 
 
         VolcanoAutoStart.defaultEruptionTimer = config.getInt("defaultvolcano.autoStart.eruptionTimer", 12000);
-        Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Eruption Timer: "+VolcanoAutoStart.defaultEruptionTimer);
+        plugin.getLogger().log(Level.INFO, "[Core] Loaded Volcano Default Eruption Timer: "+VolcanoAutoStart.defaultEruptionTimer);
 
         VolcanoBombsDefault.bombDelay = config.getInt("defaultvolcano.bombs.delay", VolcanoBombsDefault.bombDelay);
-        Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Bombs Delay: "+VolcanoBombsDefault.bombDelay);
+        plugin.getLogger().log(Level.INFO, "[Core] :oaded Volcano Default Bombs Delay: "+VolcanoBombsDefault.bombDelay);
 
         VolcanoBombsDefault.maxBombLaunchPower = (float) config.getDouble("defaultvolcano.bombs.maxLaunchPower", VolcanoBombsDefault.maxBombLaunchPower);
         VolcanoBombsDefault.minBombLaunchPower = (float) config.getDouble("defaultvolcano.bombs.minLaunchPower", VolcanoBombsDefault.minBombLaunchPower);
@@ -137,12 +137,12 @@ public final class MainPlugin extends JavaPlugin {
         VolcanoBombsDefault.minCalderaPower = config.getInt("defaultvolcano.bombs.minCalderaPower", VolcanoBombsDefault.minBombRadius);
 
         VolcanoAutoStart.defaultEruptionTimer = config.getInt("defaultvolcano.autoStart.eruptionTimer", 12000);
-        Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Eruption Timer: "+VolcanoAutoStart.defaultEruptionTimer);
+        plugin.getLogger().log(Level.INFO, "[Core] Loaded Volcano Default Eruption Timer: "+VolcanoAutoStart.defaultEruptionTimer);
 
         VolcanoLavaFlowDefaultSettings.flowed = config.getInt("defaultvolcano.lavaflow.flowed", 6);
         VolcanoLavaFlowDefaultSettings.delayFlowed = config.getInt("defaultvolcano.lavaflow.delayFlowed", 3);
         VolcanoLavaFlowDefaultSettings.updateRate = config.getInt("defaultvolcano.lavaflow.updateRate", 20);
-        Bukkit.getLogger().log(Level.INFO, "loaded Volcano Default Lava Flow Timer: flow: "+VolcanoLavaFlowDefaultSettings.flowed+", delayflow: "+VolcanoLavaFlowDefaultSettings.delayFlowed);
+        plugin.getLogger().log(Level.INFO, "[Core] Loaded Volcano Default Lava Flow Timer: flow: "+VolcanoLavaFlowDefaultSettings.flowed+", delayflow: "+VolcanoLavaFlowDefaultSettings.delayFlowed);
 
         VolcanoAutoStart.defaultCanAutoStart = config.getBoolean("autoStart.canAutoStart", true);
         VolcanoCrater.craterDefault = config.getInt("defaultvolcano.generator.craterRadius", VolcanoCrater.craterDefault);
@@ -155,30 +155,30 @@ public final class MainPlugin extends JavaPlugin {
         VolcanoAutoStartProbability.major_activity.decrease = config.getDouble("autostart.probability.major_activity.decrease", 0.25);
 
 
-        Bukkit.getLogger().log(Level.INFO, "Successfully Loaded Plugin Configuration!");
+        plugin.getLogger().log(Level.INFO, "[Core] Successfully Loaded Plugin Configuration!");
     }
 
     public static void reloadAll() {
         VolcanoAutoStart.unregisterTask();
-        Bukkit.getLogger().log(Level.INFO, "Plugin Reload Triggered!!");
+        plugin.getLogger().log(Level.INFO, "[Core] Plugin Reload Triggered!!");
 
-        Bukkit.getLogger().log(Level.INFO, "Shutting down all loaded Volcanoes");
+        plugin.getLogger().log(Level.INFO, "[Core] Shutting down all loaded Volcanoes");
         for (Volcano volcano:listVolcanoes) {
             volcano.prepareShutdown();
         }
 
-        Bukkit.getLogger().log(Level.INFO, "Unloading all volcanoes");
+        plugin.getLogger().log(Level.INFO, "[Core] Unloading all volcanoes");
         listVolcanoes.clear();
 
         plugin.reloadConfig();
 
-        Bukkit.getLogger().log(Level.INFO, "Loading plugin default configuration");
+        plugin.getLogger().log(Level.INFO, "[Core] Loading plugin default configuration");
         loadPluginConfiguration();
 
-        Bukkit.getLogger().log(Level.INFO, "Loading all volcanoes!");
+        plugin.getLogger().log(Level.INFO, "[Core] Loading all volcanoes!");
         loadVolcanoes();
 
-        Bukkit.getLogger().log(Level.INFO, "Plugin Reload Complete!!");
+        plugin.getLogger().log(Level.INFO, "[Core] Plugin Reload Complete!!");
     }
 
     public static boolean isDataInRange(double base, double comparedValue, double range) {

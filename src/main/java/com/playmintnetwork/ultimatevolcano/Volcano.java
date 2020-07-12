@@ -95,18 +95,18 @@ public class Volcano implements Listener {
     public void generateCaldera(float defaultExplosionScale) {
         boolean wasEnabled = enabled;
         if (wasEnabled) stop();
-        Bukkit.getLogger().log(Level.INFO, "Creating Caldera on Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano Caldera] Creating Caldera on Volcano "+name);
         getRandomLavaFlowCraterBlock();
-        Bukkit.getLogger().log(Level.INFO, "Updating currentHeight for Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Caldera] Updating currentHeight for Volcano "+name);
 
         int theY = location.getWorld().getHighestBlockYAt(location);
-        Bukkit.getLogger().log(Level.INFO, "Found Volcano "+name+"'s currentHeight at "+theY);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Caldera] Found Volcano "+name+"'s currentHeight at "+theY);
         Location top = new Location(location.getWorld(), location.getX(), theY, location.getZ());
 
-        Bukkit.getLogger().log(Level.INFO, "Calculating Volcano "+name+"'s Explosion Scale = ("+bombs.maxBombPower+" * (("+(theY - location.getBlockY())+"/"+(255 - location.getBlockY())+"))");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Caldera] Calculating Volcano "+name+"'s Explosion Scale = ("+bombs.maxBombPower+" * (("+(theY - location.getBlockY())+"/"+(255 - location.getBlockY())+"))");
 
         float explosionScale = defaultExplosionScale * ((theY - location.getBlockY()) / (float) (255 - location.getBlockY()));
-        Bukkit.getLogger().log(Level.INFO, "Creating explosion on Volcano "+name+"'s top @ "+top.getBlockX()+","+top.getBlockY()+","+top.getBlockZ()+" with explosion scale: "+explosionScale);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Caldera] Creating explosion on Volcano "+name+"'s top @ "+top.getBlockX()+","+top.getBlockY()+","+top.getBlockZ()+" with explosion scale: "+explosionScale);
         location.getWorld().createExplosion(top, explosionScale, true, true);
 
         List<Location> sphereLocs = VolcanoBomb.generateSphere(top, (int) explosionScale / 6, false);
@@ -115,93 +115,116 @@ public class Volcano implements Listener {
             loc.getBlock().setType(Material.AIR);
         }
 
-        Bukkit.getLogger().log(Level.INFO, "Created Caldera on Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano Caldera] Created Caldera on Volcano "+name);
         currentHeight = top.getWorld().getHighestBlockYAt(top) - location.getBlockY();
         if (wasEnabled) start();
     }
 
+    public void generateSmoke() {
+        generateSmoke(100);
+    }
+
+    public void generateSmoke(int smoke) {
+        Random rand = new Random();
+
+        Location posParticles = new Location(location.getWorld(), location.getX(), location.getWorld().getHighestBlockYAt(location.getBlockX(), location.getBlockZ()), location.getZ());
+
+        for (int i = 0; i < smoke; i++) {
+            location.getWorld().spawnParticle(
+                    Particle.CAMPFIRE_SIGNAL_SMOKE,
+                    posParticles,
+                    0,
+                    ((rand.nextDouble() - 0.5) * 2),
+                    1.4d + ((rand.nextDouble() - 0.5) * 2),
+                    ((rand.nextDouble() - 0.5) * 2)
+            );
+        }
+
+    }
+
     public boolean delete() {
-        Bukkit.getLogger().log(Level.INFO, "Deleting Volcano "+name);
-        Bukkit.getLogger().log(Level.INFO, "Stopping Volcano "+name+" to continue delete procedure");
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano Caldera] Deleting Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Caldera] Stopping Volcano "+name+" to continue delete procedure");
         stop();
         MainPlugin.listVolcanoes.remove(this);
-        Bukkit.getLogger().log(Level.INFO, "Unloaded Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Caldera] Unloaded Volcano "+name);
         if (file.exists()) {
-            Bukkit.getLogger().log(Level.INFO, "Found Volcano "+name+"'s VolcanoFile to reload");
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Caldera] Found Volcano "+name+"'s VolcanoFile to reload");
             file.delete();
-            Bukkit.getLogger().log(Level.INFO, "Deleted Volcano "+name);
+            MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano Caldera] Deleted Volcano "+name);
         }
         return true;
     }
 
     public boolean reload() {
-        Bukkit.getLogger().log(Level.INFO, "Reloading Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+" Reload] Reloading Volcano");
         prepareShutdown();
-        Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" EventHandler was gracefully shutted down.");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Reload] Volcano "+name+"'s EventHandler was gracefully shutted down.");
         MainPlugin.listVolcanoes.remove(this);
-        Bukkit.getLogger().log(Level.INFO, "Unloaded Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Reload] Unloaded Volcano");
         if (file.exists()) {
 
-            Bukkit.getLogger().log(Level.INFO, "Found Volcano "+name+"'s VolcanoFile to reload");
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Reload] Found Volcano "+name+"'s VolcanoFile to reload");
             MainPlugin.listVolcanoes.add(Volcano.importFromFile(file));
-            Bukkit.getLogger().log(Level.INFO, "Reloaded Volcano "+name);
+            MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+" Reload] Reloaded Volcano "+name);
             return true;
         } else {
+            MainPlugin.plugin.getLogger().log(Level.SEVERE, "[Volcano "+name+" Reload] Volcano "+name+" reloading failed!");
             return false;
         }
     }
 
     public static boolean create(String name, Location location, int height, String compositions, boolean throat, boolean activateGeoThermals) {
-        Bukkit.getLogger().log(Level.INFO, "Creating Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+" Create] Creating Volcano "+name);
         File volcanoFile = new File(volcanoDir, name+".yml");
-        if (volcanoFile.exists() ) { Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" already exists. Halting."); return false; }
+        if (volcanoFile.exists() ) { MainPlugin.plugin.getLogger().log(Level.SEVERE, "[Volcano "+name+" Create] Volcano "+name+" already exists. Halting."); return false; }
 
         try {
-            Bukkit.getLogger().log(Level.INFO, "Creating VolcanoFile for Volcano "+name);
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Creating VolcanoFile for Volcano "+name);
             volcanoFile.createNewFile();
         } catch (Exception e) {
-            Bukkit.getLogger().log(Level.INFO, "An Exception occurred while creating VolcanoFile for "+name+", Please refer to stacktrace below.");
+            MainPlugin.plugin.getLogger().log(Level.SEVERE, "[Volcano "+name+" Create] An Exception occurred while creating VolcanoFile for "+name+", Please refer to stacktrace below.");
             e.printStackTrace();
             return false;
         }
 
-        Bukkit.getLogger().log(Level.INFO, "Creating Volcano Object for Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Creating Volcano Object for Volcano "+name);
         Volcano volcano = new Volcano();
 
-        Bukkit.getLogger().log(Level.INFO, "Loading Compositions for Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Loading Compositions for Volcano "+name);
         if (!volcano.generator.loadCompositions(compositions)) {
-            Bukkit.getLogger().log(Level.INFO, "Composition error! on Volcano "+name);
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Composition error! on Volcano "+name);
             return false;
         }
 
-        Bukkit.getLogger().log(Level.INFO, "Setting default variables to Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Setting default variables to Volcano "+name);
         volcano.file = volcanoFile;
         volcano.name = name;
         volcano.location = new Location(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
         volcano.generator.heightLimit = height;
         volcano.generator.throat = throat;
         volcano.geoThermals.enable = activateGeoThermals;
-        Bukkit.getLogger().log(Level.INFO, "Running Crater Setup for Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Running Crater Setup for Volcano "+name);
         volcano.crater.setCraters(location);
-        Bukkit.getLogger().log(Level.INFO, "Running Initial Setup for Volcanao "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Running Initial Setup for Volcanao "+name);
         volcano.initialSetup();
 
-        Bukkit.getLogger().log(Level.INFO, "Loading Volcano "+name+" to plugin.");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Loading Volcano "+name+" to plugin.");
         MainPlugin.listVolcanoes.add(volcano);
 
-        Bukkit.getLogger().log(Level.INFO, "Trying to save Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Create] Trying to save Volcano "+name);
         volcano.saveToFile();
         return true;
     }
 
     public void start() {
         lavaFlowCycleCount = 0;
-        Bukkit.getLogger().log(Level.INFO, "Starting Volcano "+name);
-        if (enabled && !firstStart) { Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" was already enabled!"); return; }
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+"] Starting Volcano "+name);
+        if (enabled && !firstStart) { MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] Volcano "+name+" was already enabled!"); return; }
         if (firstStart) {
-            Bukkit.getLogger().log(Level.INFO, "Firststart of Volcano "+name+" since the bukkit boot detected");
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] First start of Volcano "+name+" since the bukkit boot detected");
             Block block = null;
-            Bukkit.getLogger().log(Level.INFO, "Setting Initial Crater for Volcano "+name);
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] Setting Initial Crater for Volcano "+name);
             firstStart = false;
         }
         lavaFlow.registerTask();
@@ -211,28 +234,28 @@ public class Volcano implements Listener {
         lavaFlowEnabled = true;
         autoStart.status = VolcanoCurrentStatus.ERUPTING;
 
-        Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" Composition Info: "+generator.exportCompositions());
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] Volcano "+name+" Composition Info: "+generator.exportCompositions());
         saveToFile();
     }
 
     public void stop() {
-        Bukkit.getLogger().log(Level.INFO, "Stopping Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+"] Stopping Volcano "+name);
         if (!enabled) { return; }
         enabled = false;
 
-        Bukkit.getLogger().log(Level.INFO, "unregistering Volcano "+name+" 's EventHandlers");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] unregistering Volcano "+name+" 's EventHandlers");
 
         int mostTicks = 0;
 
         erupt.unregisterTask();
 
-        Bukkit.getLogger().log(Level.INFO, "disabling Volcano "+name+" 's Force Loaded Chunks");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] disabling Volcano "+name+" 's Force Loaded Chunks");
         for (int i = 0; i < lavaFlow.lavaFlowChunks.size(); i++) {
             lavaFlow.lavaFlowChunks.get(i).setForceLoaded(false);
         }
         lavaFlow.lavaFlowChunks.clear();
 
-        Bukkit.getLogger().log(Level.INFO, "Setting Volcano "+name+" status to MAJOR_ACTIVITY");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] Setting Volcano "+name+" status to MAJOR_ACTIVITY");
         autoStart.status = VolcanoCurrentStatus.MAJOR_ACTIVITY;
 
         saveToFile();
@@ -240,7 +263,7 @@ public class Volcano implements Listener {
     }
 
     public void forceCool() {
-        Bukkit.getLogger().log(Level.INFO, "Focibily cooling volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+"] Focibily cooling volcano "+name);
 
         Iterator<VolcanoLavaCoolData> coolDataIterator = lavaFlow.lavaCoolData.iterator();
         while (coolDataIterator.hasNext()) {
@@ -253,13 +276,13 @@ public class Volcano implements Listener {
 
         forceCoolCrater();
 
-        Bukkit.getLogger().log(Level.INFO, "Unregistering volcano lavaFlow "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+"] Unregistering volcano lavaFlow "+name);
         lavaFlow.unregisterTask();
 
     }
 
     public void forceCoolCrater() {
-        Bukkit.getLogger().log(Level.INFO, "Focibily cooling crater of volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+"] Focibily cooling crater of volcano "+name);
 
         List<Block> craterBlocks = getCraterBlocks();
 
@@ -267,16 +290,16 @@ public class Volcano implements Listener {
             craterBlock.setType(getRandomBlock());
         }
 
-        Bukkit.getLogger().log(Level.INFO, "Focibily cooling crater of volcano"+name+" done.");
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+"] Focibily cooling crater of volcano"+name+" done.");
     }
 
     public void prepareShutdown() {
-        Bukkit.getLogger().log(Level.INFO, "Shutting down Volcano "+name);
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+"] Shutting down Volcano "+name);
         lavaFlow.unregisterTask();
         erupt.unregisterTask();
         geoThermals.unregisterTask();
         tremor.unregisterTask();
-        Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" was successfully shutted down");
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+"] Volcano "+name+" was successfully shutted down");
     }
 
     public void updateData() {
@@ -346,9 +369,9 @@ public class Volcano implements Listener {
         yyy = highestY[i];
         if (lavaFlowCycleCount % (lavaFlow.settings.updateRate * 20) == 0) {
             if (offSetControl) {
-                Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" is erupting lava @ Block "+location.getWorld().getName()+" "+crater.xF[i]+","+yyy+","+crater.zF[i]+" with craterOffset control: "+(averageY - craterOffset));
+                MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] Volcano "+name+" is erupting lava @ Block "+location.getWorld().getName()+" "+crater.xF[i]+","+yyy+","+crater.zF[i]+" with craterOffset control: "+(averageY - craterOffset));
             } else {
-                Bukkit.getLogger().log(Level.INFO, "Volcano "+name+" is erupting lava @ Block "+location.getWorld().getName()+" "+crater.xF[i]+","+yyy+","+crater.zF[i]);
+                MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+"] Volcano "+name+" is erupting lava @ Block "+location.getWorld().getName()+" "+crater.xF[i]+","+yyy+","+crater.zF[i]);
             }
         }
 
@@ -398,13 +421,13 @@ public class Volcano implements Listener {
 
     public static Volcano importFromFile(File volcanoFile) {
         try {
-            Bukkit.getLogger().log(Level.INFO, "Loading VolcanoFile "+volcanoFile.getName());
+            MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano Importer] Loading VolcanoFile "+volcanoFile.getName());
             if (volcanoFile.getName().toLowerCase().endsWith(".yml")) {
 
-                Bukkit.getLogger().log(Level.INFO, "Checked VolcanoFile "+volcanoFile.getName()+"'s extension");
+                MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Importer] Checked VolcanoFile "+volcanoFile.getName()+"'s extension");
                 String[] split = volcanoFile.getName().split(".yml");
 
-                Bukkit.getLogger().log(Level.INFO, "Loaded VolcanoFile "+volcanoFile.getName());
+                MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Importer] Loaded VolcanoFile "+volcanoFile.getName());
                 Volcano volcano = new Volcano();
                 volcano.name = split[0];
 
@@ -451,21 +474,21 @@ public class Volcano implements Listener {
                 volcano.bombs.bombDelay = conf.getInt("bombs.delay", VolcanoBombsDefault.bombDelay);
 
 
-                Bukkit.getLogger().log(Level.INFO, "Running Crater Setup for Volcano "+volcano.name+"!");
+                MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Importer] Running Crater Setup for Volcano "+volcano.name+"!");
                 volcano.crater.setCraters(volcano.location);
 
-                Bukkit.getLogger().log(Level.INFO, "Setting Running Initial Setup for Volcano "+volcano.name+"!");
+                MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Importer] Setting Running Initial Setup for Volcano "+volcano.name+"!");
                 volcano.initialSetup();
 
-                Bukkit.getLogger().log(Level.INFO, "Setting Status for Volcano "+volcano.name+"!");
+                MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano Importer] Setting Status for Volcano "+volcano.name+"!");
                 volcano.autoStart.setStatus(conf.getString("autoStart.status", "DORMANT"));
-                Bukkit.getLogger().log(Level.INFO, "Loaded VolcanoFile "+volcanoFile.getName()+" and loaded volcano "+volcano.name);
+                MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano Importer] Loaded VolcanoFile "+volcanoFile.getName()+" and loaded volcano "+volcano.name);
                 return volcano;
             } else {
 
 
-                Bukkit.getLogger().log(Level.SEVERE, "Error was detected while importing a volcanoFile: extension is not YML");
-                Bukkit.getLogger().log(Level.SEVERE, "This should be handled before calling importFromFile Function.");
+                MainPlugin.plugin.getLogger().log(Level.SEVERE, "[Volcano Importer] Error was detected while importing a volcanoFile: extension is not YML");
+                MainPlugin.plugin.getLogger().log(Level.SEVERE, "[Volcano Importer] This should be handled before calling importFromFile Function.");
 
                 return null;
             }
@@ -481,45 +504,45 @@ public class Volcano implements Listener {
     }
 
     public void initialSetup() {
-        Bukkit.getLogger().log(Level.INFO, "Running Initial Setup for Volcano "+name+"!");
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+" Initial Setup] Running Initial Setup for Volcano "+name+"!");
         lavaFlow.volcano = this;
         erupt.volcano = this;
         geoThermals.volcano = this;
         autoStart.volcano = this;
 
-        Bukkit.getLogger().log(Level.INFO, "Registering EventHandler for Volcano "+name+"!");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Initial Setup] Registering EventHandler for Volcano "+name+"!");
         geoThermals.registerEventHandler();
         lavaFlow.registerEventHandler();
 
-        Bukkit.getLogger().log(Level.INFO, "Registering Task for Volcano "+name+"!");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Initial Setup] Registering Task for Volcano "+name+"!");
         geoThermals.registerTask();
         erupt.registerTask();
 
-        Bukkit.getLogger().log(Level.INFO, "Running Crater Setup for Volcano "+name+"!");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Initial Setup] Running Crater Setup for Volcano "+name+"!");
         crater.setCraters(location);
 
-        Bukkit.getLogger().log(Level.INFO, "updating currentHeight information for Volcano "+name+"!");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Initial Setup] Updating currentHeight information for Volcano "+name+"!");
         currentHeight = (location.getWorld().getHighestBlockAt(location).getY() < location.getBlockY()) ? location.getBlockY() : location.getWorld().getHighestBlockAt(location).getY();
 
-        Bukkit.getLogger().log(Level.INFO, "updating zone information for Volcano "+name+"!");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Initial Setup] Updating zone information for Volcano "+name+"!");
         updateData();
 
-        Bukkit.getLogger().log(Level.INFO, "updating summitBlock information for Volcano "+name+"!");
+        MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Initial Setup] Updating summitBlock information for Volcano "+name+"!");
         summitBlock = (location.getWorld().getHighestBlockAt(location).getY() < location.getBlockY()) ? location.getWorld().getBlockAt(location) : location.getWorld().getHighestBlockAt(location);
 
-        Bukkit.getLogger().log(Level.INFO, "Initial Setup for Volcano "+name+" success!");
+        MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+" Initial Setup] Initial Setup for Volcano "+name+" success!");
 
         if (enabled) {
-            Bukkit.getLogger().log(Level.INFO, "Starting Volcano "+name+" based on loaded configuration");
+            MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+" Initial Setup] Starting Volcano "+name+" based on loaded configuration");
             start();
         }
     }
 
     public void saveToFile() {
         try {
-            Bukkit.getLogger().log(Level.INFO, "Saving Volcano "+name);
+            MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+" Save] Saving Volcano "+name);
 
-            Bukkit.getLogger().log(Level.INFO, "Starting to formatting Volcano "+name+"'s data");
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Save] Starting to formatting Volcano "+name+"'s data");
             YamlConfiguration conf = YamlConfiguration.loadConfiguration(file);
             conf.options().header("Ultimate Volcano Configuration");
             conf.set("enable", enabled);
@@ -554,7 +577,7 @@ public class Volcano implements Listener {
             conf.set("generator.heightLimit", generator.heightLimit);
             conf.set("generator.throat", generator.throat);
             conf.set("crater.craterRadius", crater.craterRadius);
-            Bukkit.getLogger().log(Level.INFO, "Starting to formatting Volcano "+name+"'s layer data");
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Save] Starting to formatting Volcano "+name+"'s layer data");
             String layerData = "";
             for (int i = 0; i < generator.composition.size(); i++) {
                 layerData += generator.composition.get(i).material+","+generator.composition.get(i).percentage;
@@ -563,11 +586,11 @@ public class Volcano implements Listener {
                 }
             }
             conf.set("generator.layer", layerData);
-            Bukkit.getLogger().log(Level.INFO, "Saving Volcano "+name+"'s data to file");
+            MainPlugin.plugin.getLogger().log(Level.FINEST, "[Volcano "+name+" Save] Saving Volcano "+name+"'s data to file");
             conf.save(file);
-            Bukkit.getLogger().log(Level.INFO, "Saved Volcano "+name);
+            MainPlugin.plugin.getLogger().log(Level.INFO, "[Volcano "+name+" Save] Saved Volcano "+name);
         } catch (Exception e) {
-            Bukkit.getLogger().log(Level.SEVERE, "ERROR while saving Volcano "+name);
+            MainPlugin.plugin.getLogger().log(Level.SEVERE, "[Volcano "+name+" Save] ERROR while saving Volcano "+name);
             e.printStackTrace();
         }
     }
@@ -677,12 +700,12 @@ class VolcanoGenerator {
         }
         if (sum < 100) {
             if (MainPlugin.debug) {
-                Bukkit.getLogger().log(Level.WARNING, "sum is less than 100. May have possibility of errors while running");
+                MainPlugin.plugin.getLogger().log(Level.WARNING, "[Volcano Crater] sum is less than 100. May have possibility of errors while running");
             }
             return false;
         } else if (sum > 100) {
             if (MainPlugin.debug) {
-                Bukkit.getLogger().log(Level.WARNING, "sum is over 100. May have possibility of missing materials while running");
+                MainPlugin.plugin.getLogger().log(Level.WARNING, "[Volcano Crater] sum is over 100. May have possibility of missing materials while running");
             }
             return false;
         }

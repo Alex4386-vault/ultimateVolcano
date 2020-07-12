@@ -132,17 +132,6 @@ public class VolcanoLavaFlow implements Listener {
     }
 
     @EventHandler
-    public void onBlockForm(BlockFormEvent event) {
-        if (lavaFlowingBlocks.contains(event.getBlock())) {
-            if (Arrays.asList(VolcanoLavaFlowExplode.lavaCooled).contains(event.getNewState().getType())) {
-                Block block = event.getBlock();
-                block.setType(Material.LAVA);
-
-            }
-        }
-    }
-
-    @EventHandler
     public void onBlockFromTo(BlockFromToEvent event) {
 
         // new lava flow,
@@ -206,6 +195,10 @@ public class VolcanoLavaFlow implements Listener {
                         break;
                 }
 
+                if (nearByBlock.getType() == Material.AIR) {
+                    continue;
+                }
+
                 if (Arrays.asList(VolcanoLavaFlowExplode.explode).contains(nearByBlock.getType())) {
                     if (volcano.affected(nearByBlock.getLocation())) {
                         if (Arrays.asList(VolcanoLavaFlowExplode.explode).contains(nearByBlock.getType())) {
@@ -238,15 +231,12 @@ public class VolcanoLavaFlow implements Listener {
 
     public void flowLavaToVolcano() {
         if (volcano.enabled) {
-            Location posParticles = new Location(volcano.location.getWorld(), volcano.location.getX(), volcano.location.getWorld().getHighestBlockYAt(volcano.location.getBlockX(), volcano.location.getBlockZ()), volcano.location.getZ());
 
             long timeNow = System.currentTimeMillis();
             if (System.currentTimeMillis() >= nextFlowTime) {
                 int tickFactor = 20 / settings.updateRate;
 
-                for (int i = 0; i < 100; i++)
-                    volcano.location.getWorld().spawnParticle(Particle.CAMPFIRE_SIGNAL_SMOKE, posParticles, 0, ((rand.nextDouble() - 0.5) * 2), 1.4d+((rand.nextDouble() - 0.5) * 2), ((rand.nextDouble() - 0.5) * 2));
-
+                volcano.generateSmoke();
                 Block whereToFlow = volcano.getRandomLavaFlowCraterBlock();
                 whereToFlow.setType(Material.LAVA);
                 lavaCoolData.add(new VolcanoLavaCoolData(whereToFlow, volcano.getRandomBlock(), settings.flowed * tickFactor));

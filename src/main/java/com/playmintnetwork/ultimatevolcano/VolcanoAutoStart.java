@@ -1,6 +1,7 @@
 package com.playmintnetwork.ultimatevolcano;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 
 import java.util.Random;
 import java.util.logging.Level;
@@ -20,7 +21,7 @@ public class VolcanoAutoStart {
         if (scheduleID >= 0) { return; }
         Bukkit.getScheduler().scheduleSyncRepeatingTask(MainPlugin.plugin,
             () -> {
-                Bukkit.getLogger().log(Level.INFO, "Volcano AutoStart interval Checking...");
+                Bukkit.getLogger().log(Level.INFO, "[Volcano Autostart] Volcano AutoStart interval Checking...");
 
                 Random rand = new Random();
                 for (Volcano volcano:MainPlugin.listVolcanoes) {
@@ -32,34 +33,34 @@ public class VolcanoAutoStart {
                             case DORMANT:
                                 if (a <= VolcanoAutoStartProbability.dormant.increase) {
                                     volcano.autoStart.status = VolcanoCurrentStatus.MINOR_ACTIVITY;
-                                    Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+"'s status was raised to"+volcano.autoStart.getStatus());
+                                    Bukkit.getLogger().log(Level.INFO, "[Volcano Autostart] Volcano "+volcano.name+"'s status was raised to"+volcano.autoStart.getStatus());
                                 } else if (a <= VolcanoAutoStartProbability.dormant.increase + VolcanoAutoStartProbability.dormant.decrease) {
                                     volcano.autoStart.status = VolcanoCurrentStatus.EXTINCT;
-                                    Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+"'s status was decreased to"+volcano.autoStart.getStatus());
+                                    Bukkit.getLogger().log(Level.INFO, "[Volcano Autostart] Volcano "+volcano.name+"'s status was decreased to"+volcano.autoStart.getStatus());
                                 }
                                 break;
                             case MINOR_ACTIVITY:
                                 if (a <= VolcanoAutoStartProbability.minor_activity.increase) {
                                     volcano.autoStart.status = VolcanoCurrentStatus.MAJOR_ACTIVITY;
-                                    Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+"'s status was raised to"+volcano.autoStart.getStatus());
+                                    Bukkit.getLogger().log(Level.INFO, "[Volcano Autostart] Volcano "+volcano.name+"'s status was raised to"+volcano.autoStart.getStatus());
                                 } else if (a <= VolcanoAutoStartProbability.minor_activity.increase + VolcanoAutoStartProbability.minor_activity.decrease) {
                                     volcano.autoStart.status = VolcanoCurrentStatus.DORMANT;
-                                    Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+"'s status was decreased to"+volcano.autoStart.getStatus());
+                                    Bukkit.getLogger().log(Level.INFO, "[Volcano Autostart] Volcano "+volcano.name+"'s status was decreased to"+volcano.autoStart.getStatus());
                                 }
                                 break;
                             case MAJOR_ACTIVITY:
                                 if (a <= VolcanoAutoStartProbability.major_activity.increase) {
                                     volcano.autoStart.status = VolcanoCurrentStatus.ERUPTING;
-                                    Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+"'s status was raised into ERUPTING, It is NOW ERUPTING!!!!");
+                                    Bukkit.getLogger().log(Level.INFO, "[Volcano Autostart] Volcano "+volcano.name+"'s status was raised into "+ ChatColor.RED+"ERUPTING"+ChatColor.RESET+", "+ChatColor.RED+"It is NOW ERUPTING!!!!"+ChatColor.RESET);
                                     volcano.start();
                                     Bukkit.getScheduler().scheduleSyncDelayedTask(MainPlugin.plugin, () -> {
-                                        Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+" just stopped erupting and level gone down to "+volcano.autoStart.getStatus());
+                                        Bukkit.getLogger().log(Level.INFO, "[Volcano Autostart] Volcano "+volcano.name+" just stopped erupting and level gone down to "+volcano.autoStart.getStatus());
                                         volcano.stop();
                                         volcano.autoStart.status = VolcanoCurrentStatus.MAJOR_ACTIVITY;
                                     }, volcano.autoStart.eruptionTimer);
                                 } else if (a <= VolcanoAutoStartProbability.major_activity.increase + VolcanoAutoStartProbability.major_activity.decrease) {
                                     volcano.autoStart.status = VolcanoCurrentStatus.MINOR_ACTIVITY;
-                                    Bukkit.getLogger().log(Level.INFO, "Volcano "+volcano.name+"'s status was decreased to"+volcano.autoStart.getStatus());
+                                    Bukkit.getLogger().log(Level.INFO, "[Volcano Autostart] Volcano "+volcano.name+"'s status was decreased to"+volcano.autoStart.getStatus());
                                 }
                                 break;
                             default:

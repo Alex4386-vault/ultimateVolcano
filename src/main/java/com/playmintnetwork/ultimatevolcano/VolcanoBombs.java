@@ -105,7 +105,7 @@ public class VolcanoBombs {
             } else {
                 if ((bomb.prevLocation.equals(bomb.block.getLocation()) && VolcanoBombListener.groundChecker(bomb.block.getLocation(), bomb.bombRadius)) || bomb.block.isOnGround()) {
 
-                    Bukkit.getLogger().log(Level.INFO, "Volcano Bomb from Volcano "+volcano.name+" bomb land started!");
+                    Bukkit.getLogger().log(Level.INFO, "[Volcano "+volcano.name+" BombTracker] Volcano Bomb from Volcano "+volcano.name+" bomb landed!");
                     bomb.land();
                     bomb.stopTrail();
                     bombIterator.remove();
