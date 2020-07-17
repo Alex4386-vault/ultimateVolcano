@@ -1,14 +1,14 @@
 package com.playmintnetwork.ultimatevolcano;
 
-import net.minecraft.server.v1_15_R1.*;
+import net.minecraft.server.v1_16_R1.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_15_R1.CraftChunk;
-import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_15_R1.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_15_R1.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_16_R1.CraftChunk;
+import org.bukkit.craftbukkit.v1_16_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_16_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_16_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -46,7 +46,7 @@ public class VolcanoUtils {
 
         BlockPosition blockPosition = new BlockPosition(x,y,z);
 
-        net.minecraft.server.v1_15_R1.Block tmpBlock = CraftMagicNumbers.getBlock(material);
+        net.minecraft.server.v1_16_R1.Block tmpBlock = CraftMagicNumbers.getBlock(material);
         IBlockData iBlockData = tmpBlock.getBlockData();
 
         chunk.setType(blockPosition, iBlockData, applyPhysics);
@@ -123,7 +123,7 @@ public class VolcanoUtils {
             diffz = Math.abs((int) ep.locZ() - chunk.getZ() << 4);
             if (diffx <= view && diffz <= view) {
                 ep.a(new ChunkCoordIntPair(chunk.getX(), chunk.getZ()));
-                ep.playerConnection.sendPacket(new PacketPlayOutMapChunk(rawChunk, 20));
+                ep.playerConnection.sendPacket(new PacketPlayOutMapChunk(rawChunk, 20, true));
 
             }
         }

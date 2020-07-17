@@ -25,7 +25,7 @@ jobs:
         mkdir BuildTools
         cd BuildTools
         wget https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
-        java -jar BuildTools.jar --rev 1.15.2
+        java -jar BuildTools.jar --rev 1.16.1
         cd ..
     - name: Build with Maven
       run: mvn
