@@ -12,6 +12,7 @@ import org.bukkit.craftbukkit.v1_16_R1.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_16_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.spigotmc.AsyncCatcher;
 
 import java.util.List;
 
@@ -111,6 +112,7 @@ public class VolcanoUtils {
     }
 
     public static void updateChunk(org.bukkit.Chunk chunk) {
+        AsyncCatcher.catchOp("chunk update");
 
         int diffx, diffz;
         int view = Bukkit.getServer().getViewDistance() << 4;
