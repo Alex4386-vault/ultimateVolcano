@@ -61,6 +61,7 @@ public class Volcano implements Listener {
         // FALLBACK
         int b = random.nextInt(generator.composition.size());
         //System.out.println(b);
+        
         return generator.composition.get(b).material;
     }
 
@@ -121,22 +122,49 @@ public class Volcano implements Listener {
     }
 
     public void generateSmoke() {
-        generateSmoke(100);
+        generateSmoke(VolcanoSmokeType.DARK);
     }
 
-    public void generateSmoke(int smoke) {
+    public void generateSmoke(int amount) {
+        generateSmoke(VolcanoSmokeType.DARK, amount);
+    }
+
+    public void generateSmoke(VolcanoSmokeType smokeType) {
+        generateSmoke(smokeType, 100);
+    }
+
+    public void generateSmoke(VolcanoSmokeType smokeType, int smoke) {
         Random rand = new Random();
 
         Location posParticles = new Location(location.getWorld(), location.getX(), location.getWorld().getHighestBlockYAt(location.getBlockX(), location.getBlockZ()), location.getZ());
 
+        Particle.DustOptions options;
+        float smokeSize = 1.2f;
+
+        if (smokeType == VolcanoSmokeType.DARK) {
+            options = new Particle.DustOptions(Color.fromRGB(64,64,64), smokeSize);
+        } else {
+            options = new Particle.DustOptions(Color.fromRGB(255,255,255), smokeSize);
+        }
+
         for (int i = 0; i < smoke; i++) {
-            location.getWorld().spawnParticle(
-                    Particle.CAMPFIRE_SIGNAL_SMOKE,
+            VolcanoUtils.createParticle(
+                    Particle.REDSTONE,
                     posParticles,
-                    0,
+                    100,
                     ((rand.nextDouble() - 0.5) * 2),
                     1.4d + ((rand.nextDouble() - 0.5) * 2),
-                    ((rand.nextDouble() - 0.5) * 2)
+                    ((rand.nextDouble() - 0.5) * 2),
+                    0,
+                    options
+            );
+            VolcanoUtils.createParticle(
+                Particle.CAMPFIRE_SIGNAL_SMOKE,
+                posParticles,
+                0,
+                ((rand.nextDouble() - 0.5) * 2),
+                1.4d + ((rand.nextDouble() - 0.5) * 2),
+                ((rand.nextDouble() - 0.5) * 2)
             );
         }
 
@@ -722,4 +750,9 @@ class VolcanoGenerator {
         }
         return layerData;
     }
+}
+
+enum VolcanoSmokeType {
+    DARK,
+    WHITE
 }

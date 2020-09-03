@@ -88,7 +88,7 @@ public class VolcanoBomb {
         Location loc = block.getLocation();
         loc.getChunk().load();
 
-        loc.getWorld().spawnParticle(
+        VolcanoUtils.createParticle(
                 Particle.EXPLOSION_HUGE,
                 loc,
                 1

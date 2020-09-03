@@ -23,7 +23,7 @@ defaultvolcano:
     pourLavaStart: true
     canAutoStart: true
   generator:
-    layer: "STONE,100"
+    layer: "BASALT,100"
     craterRadius: 50
   erupt:
     isExplosive: true

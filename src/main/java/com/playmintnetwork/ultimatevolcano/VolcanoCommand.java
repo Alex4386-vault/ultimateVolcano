@@ -785,6 +785,38 @@ public class VolcanoCommand {
                 }
             }
             return true;
+        } else if (permissionAndCmdChecker("smoke", cmd, sender)) {
+            if (args.length < 2) {
+                sender.sendMessage(ChatColor.RED+"key argument name is missing!");
+            } else {
+                if (MainPlugin.findVolcano(args[1]) != null) {
+                    Volcano volcano = MainPlugin.findVolcano(args[1]);
+
+                    int smokeAmount = 100;
+                    if (args.length > 4) {
+                        smokeAmount = Integer.parseInt(args[3]);
+                    }
+
+                    if (args.length > 3) {
+                        String type = "dark";
+
+                        if (args[2].toLowerCase() == "white") {
+                            volcano.generateSmoke(VolcanoSmokeType.WHITE, smokeAmount);
+                            type = args[2].toLowerCase();
+                        } else {
+                            volcano.generateSmoke(VolcanoSmokeType.DARK, smokeAmount);
+                        }
+
+                        sender.sendMessage(ChatColor.GREEN + "Volcano "+volcano.name+" is now smoking "+type+" smoke "+smokeAmount+" times");
+                    } else {
+                        volcano.generateSmoke(smokeAmount);
+                        sender.sendMessage(ChatColor.GREEN + "Volcano "+volcano.name+" is now smoking "+smokeAmount+" times");
+                    }
+                } else {
+                    sender.sendMessage(ChatColor.RED+"Volcano "+args[1]+" can not be found!");
+                }
+            }
+            return true;
         }
 
         sender.sendMessage(ChatColor.RED+"[Volcano] "+ChatColor.GOLD+"Invalid Command Detected, or you don't have a permission to use this command at all!");
