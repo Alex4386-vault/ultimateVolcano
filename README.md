@@ -1,4 +1,7 @@
 # Ultimate Volcano
+Deprecated. Moved to [Typhon-Plugin](https://github.com/Alex4386/Typhon-Plugin)
+
+## Old README
 This is a rewrite of the program written by [Diwaly's Volcano Plugin](https://bitbucket.org/diwaly/volcano/src/default/).  
 Since this is considered as a Fork, This Plugin is distributed under GPLv3, Same License of diwaly's.  
   
